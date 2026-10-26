@@ -1,23 +1,287 @@
-<button id="pwa-install-btn" type="button" aria-label="Install app" hidden
-  style="position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));right:20px;z-index:9999;background:#6366F1;color:#fff;padding:10px 18px;border-radius:999px;border:none;font-weight:600;font-size:13px;cursor:pointer;box-shadow:0 8px 24px rgba(99,102,241,.4)">
-  Install app
-</button>
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(console.error));
-  }
-  const btn = document.getElementById('pwa-install-btn');
-  const installed = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-  let deferred;
-  window.addEventListener('beforeinstallprompt', e => {
-    e.preventDefault(); deferred = e;
-    if (!installed) btn.hidden = false;
-  });
-  btn.addEventListener('click', async () => {
-    if (!deferred) return;
-    deferred.prompt();
-    await deferred.userChoice;
-    deferred = null; btn.hidden = true;
-  });
-  window.addEventListener('appinstalled', () => { btn.hidden = true; });
-</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Desions — Instant Decision Engine</title>
+  <meta name="theme-color" content="#090A0F" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #090A0F; color: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .glass-card { background: rgba(18, 20, 29, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .loader { border: 3px solid rgba(255, 255, 255, 0.1); border-top-color: #6366F1; border-radius: 50%; width: 22px; height: 22px; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 sm:p-6 pb-20">
+
+  <!-- Header -->
+  <header class="w-full max-w-2xl text-center pt-6 pb-6">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-3">
+      <span>⚡</span> Real-Time Outcome Engine
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">Desions</h1>
+    <p class="text-gray-400 text-sm mt-1">Direct verdicts, side-by-side pros & cons, zero fluff.</p>
+  </header>
+
+  <!-- Main Query Card -->
+  <main class="w-full max-w-2xl space-y-5">
+    <section class="glass-card rounded-2xl p-4 sm:p-5 shadow-2xl">
+      <form id="decision-form" class="space-y-3">
+        <div class="relative">
+          <input
+            id="query-input"
+            type="text"
+            maxlength="250"
+            required
+            value="Should I buy iPhone 18 or 18 Pro Max? I have 1 lakh only"
+            placeholder="e.g. Should I rent in Gurgaon or Noida? Budget 30k"
+            class="w-full bg-[#12141D] text-white placeholder-gray-500 text-sm sm:text-base rounded-xl px-4 py-3.5 pr-28 border border-white/10 focus:outline-none focus:border-indigo-500 transition-colors"
+          />
+          <button
+            type="submit"
+            id="submit-btn"
+            class="absolute right-2 top-2 bottom-2 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-semibold flex items-center gap-2 transition-all"
+          >
+            <span id="btn-text">Decide</span>
+            <div id="btn-spinner" class="loader hidden"></div>
+          </button>
+        </div>
+
+        <!-- Priority Lens Toggles -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+          <span class="text-gray-400 font-medium whitespace-nowrap">Priority:</span>
+          <button type="button" class="lens-chip active px-3 py-1 rounded-full bg-indigo-600 text-white font-medium" data-lens="Balanced & Practical">Balanced</button>
+          <button type="button" class="lens-chip px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5" data-lens="Strict Budget & Value for Money">Budget First</button>
+          <button type="button" class="lens-chip px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5" data-lens="Time Saver & Convenience">Save Time</button>
+          <button type="button" class="lens-chip px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5" data-lens="High Quality & Future-Proof">Future-Proof</button>
+        </div>
+      </form>
+
+      <!-- Quick Scenario Test Chips -->
+      <div class="mt-4 pt-3 border-t border-white/5 flex flex-wrap items-center gap-1.5 text-xs text-gray-400">
+        <span class="font-medium mr-1">Quick Test:</span>
+        <button class="test-chip px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5" data-q="Should I buy iPhone 18 or 18 Pro Max? I have 1 lakh only">📱 iPhone Budget</button>
+        <button class="test-chip px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5" data-q="Should I cook dinner at 10 PM or order on Swiggy?">🍲 Cook vs. Swiggy</button>
+        <button class="test-chip px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5" data-q="Should I buy a PS5 Slim or Xbox Series X? Budget 45k">🎮 PS5 vs. Xbox</button>
+        <button class="test-chip px-2.5 py-1 rounded-md bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20" data-q="I have sharp chest pain, should I sleep it off or go to gym?">🚨 Test Guardrail</button>
+      </div>
+    </section>
+
+    <!-- Error Banner -->
+    <div id="error-card" class="hidden rounded-xl p-4 bg-amber-500/10 border border-amber-500/20 text-amber-300 text-sm"></div>
+
+    <!-- Safety Guardrail Blocked State -->
+    <section id="guardrail-card" class="hidden rounded-2xl p-5 bg-rose-950/40 border border-rose-500/30 text-rose-100 shadow-xl space-y-3">
+      <div class="flex items-center gap-2 text-rose-400 font-bold text-sm tracking-wide uppercase">
+        <span class="text-base">🛡️</span> <span id="guardrail-title">Safety Guardrail Triggered</span>
+      </div>
+      <p id="guardrail-message" class="text-sm text-rose-200/90 leading-relaxed"></p>
+      <div class="pt-2 border-t border-rose-500/20 text-xs space-y-1">
+        <p class="font-semibold text-rose-300">Immediate Official Helplines:</p>
+        <div id="helpline-list" class="flex flex-wrap gap-2 pt-1"></div>
+      </div>
+    </section>
+
+    <!-- Results Section -->
+    <section id="results-container" class="space-y-4">
+      <!-- Winner Verdict Banner -->
+      <div id="verdict-card" class="glass-card rounded-2xl p-5 border-l-4 border-l-emerald-500 relative overflow-hidden">
+        <div class="flex items-center justify-between gap-2 mb-1.5">
+          <span class="text-xs uppercase font-bold tracking-wider text-emerald-400 flex items-center gap-1">
+            <span>🏆</span> Recommended Verdict
+          </span>
+          <span id="winner-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/20"></span>
+        </div>
+        <h2 id="verdict-headline" class="text-lg sm:text-xl font-bold text-white tracking-tight"></h2>
+        <p id="verdict-summary" class="text-gray-300 text-sm mt-1.5 leading-relaxed"></p>
+      </div>
+
+      <!-- Side-by-Side Pros & Cons Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Option A -->
+        <div id="card-a" class="glass-card rounded-xl p-4 space-y-3 transition-all">
+          <div class="border-b border-white/5 pb-2.5">
+            <h3 id="name-a" class="font-bold text-white text-base"></h3>
+            <p id="sub-a" class="text-xs text-gray-400 mt-0.5"></p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1.5">Pros</p>
+            <ul id="pros-a" class="space-y-1.5 text-xs text-gray-300"></ul>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-rose-400 uppercase tracking-wider mb-1.5">Cons</p>
+            <ul id="cons-a" class="space-y-1.5 text-xs text-gray-400"></ul>
+          </div>
+        </div>
+
+        <!-- Option B -->
+        <div id="card-b" class="glass-card rounded-xl p-4 space-y-3 transition-all">
+          <div class="border-b border-white/5 pb-2.5">
+            <h3 id="name-b" class="font-bold text-white text-base"></h3>
+            <p id="sub-b" class="text-xs text-gray-400 mt-0.5"></p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1.5">Pros</p>
+            <ul id="pros-b" class="space-y-1.5 text-xs text-gray-300"></ul>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-rose-400 uppercase tracking-wider mb-1.5">Cons</p>
+            <ul id="cons-b" class="space-y-1.5 text-xs text-gray-400"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- PWA Install Button -->
+  <button id="pwa-install-btn" style="display: none;" class="fixed bottom-4 right-4 z-50 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg transition-transform hover:scale-105">
+    📲 Install App
+  </button>
+
+  <script>
+    let activeLens = 'Balanced & Practical';
+
+    // 1. Lens toggle handling
+    document.querySelectorAll('.lens-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.lens-chip').forEach(b => {
+          b.className = 'lens-chip px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5';
+        });
+        btn.className = 'lens-chip active px-3 py-1 rounded-full bg-indigo-600 text-white font-medium';
+        activeLens = btn.dataset.lens;
+        executeDecision();
+      });
+    });
+
+    // 2. Preset test chips
+    document.querySelectorAll('.test-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.getElementById('query-input').value = chip.dataset.q;
+        executeDecision();
+      });
+    });
+
+    // 3. Form submit
+    document.getElementById('decision-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      executeDecision();
+    });
+
+    // 4. Call /api/decide endpoint
+    async function executeDecision() {
+      const query = document.getElementById('query-input').value.trim();
+      if (!query) return;
+
+      const submitBtn = document.getElementById('submit-btn');
+      const btnText = document.getElementById('btn-text');
+      const btnSpinner = document.getElementById('btn-spinner');
+      const errorCard = document.getElementById('error-card');
+      const guardrailCard = document.getElementById('guardrail-card');
+      const resultsContainer = document.getElementById('results-container');
+
+      // Set loading state
+      submitBtn.disabled = true;
+      btnText.classList.add('hidden');
+      btnSpinner.classList.remove('hidden');
+      errorCard.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/decide', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, perspective: activeLens })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Server returned an error.');
+        }
+
+        if (data.blocked) {
+          // Render Guardrail Block
+          resultsContainer.classList.add('hidden');
+          guardrailCard.classList.remove('hidden');
+          document.getElementById('guardrail-title').innerText = data.blockTitle || 'Guardrail Triggered';
+          document.getElementById('guardrail-message').innerText = data.blockMessage || 'Cannot answer medical or dangerous queries.';
+          
+          const helplineBox = document.getElementById('helpline-list');
+          helplineBox.innerHTML = '';
+          (data.helplines || [{ name: 'Emergency', number: '112' }]).forEach(h => {
+            helplineBox.innerHTML += `<span class="px-2 py-1 rounded bg-rose-500/20 text-rose-200 font-mono">${h.name}: <strong>${h.number}</strong></span>`;
+          });
+        } else {
+          // Render Clean Decision Result
+          guardrailCard.classList.add('hidden');
+          resultsContainer.classList.remove('hidden');
+
+          document.getElementById('winner-badge').innerText = `Option ${data.winner} Wins`;
+          document.getElementById('verdict-headline').innerText = data.verdictHeadline || 'Decision Verdict';
+          document.getElementById('verdict-summary').innerText = data.verdictSummary || '';
+
+          // Option A
+          document.getElementById('name-a').innerText = data.optionA?.name || 'Option A';
+          document.getElementById('sub-a').innerText = data.optionA?.subtitle || '';
+          document.getElementById('pros-a').innerHTML = (data.optionA?.pros || []).map(p => `<li class="flex items-start gap-1.5"><span class="text-emerald-400 font-bold">✓</span><span>${p}</span></li>`).join('');
+          document.getElementById('cons-a').innerHTML = (data.optionA?.cons || []).map(c => `<li class="flex items-start gap-1.5"><span class="text-rose-400 font-bold">✕</span><span>${c}</span></li>`).join('');
+
+          // Option B
+          document.getElementById('name-b').innerText = data.optionB?.name || 'Option B';
+          document.getElementById('sub-b').innerText = data.optionB?.subtitle || '';
+          document.getElementById('pros-b').innerHTML = (data.optionB?.pros || []).map(p => `<li class="flex items-start gap-1.5"><span class="text-emerald-400 font-bold">✓</span><span>${p}</span></li>`).join('');
+          document.getElementById('cons-b').innerHTML = (data.optionB?.cons || []).map(c => `<li class="flex items-start gap-1.5"><span class="text-rose-400 font-bold">✕</span><span>${c}</span></li>`).join('');
+
+          // Highlight winner card visually
+          const cardA = document.getElementById('card-a');
+          const cardB = document.getElementById('card-b');
+          if (data.winner === 'A') {
+            cardA.classList.add('border-emerald-500/50', 'bg-emerald-950/10');
+            cardB.classList.remove('border-emerald-500/50', 'bg-emerald-950/10');
+          } else {
+            cardB.classList.add('border-emerald-500/50', 'bg-emerald-950/10');
+            cardA.classList.remove('border-emerald-500/50', 'bg-emerald-950/10');
+          }
+        }
+      } catch (err) {
+        errorCard.innerText = `Error: ${err.message}`;
+        errorCard.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        btnText.classList.remove('hidden');
+        btnSpinner.classList.add('hidden');
+      }
+    }
+
+    // Run initial query on page load
+    window.addEventListener('DOMContentLoaded', () => executeDecision());
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error:', err));
+      });
+    }
+
+    // PWA Install Button Handler
+    let deferredPrompt;
+    const installBtn = document.getElementById('pwa-install-btn');
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'block';
+    });
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') installBtn.style.display = 'none';
+      deferredPrompt = null;
+    });
+  </script>
+</body>
+</html>
