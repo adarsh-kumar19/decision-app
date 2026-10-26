@@ -1,286 +1,1859 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="acid-dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-  <title>Decisions — Instant Decision Engine</title>
-  <meta name="theme-color" content="#090A0F" />
+  <title>DESIONS ⚡ Gen-Z AI Decision & Outcome Engine</title>
+
+  <!-- PWA & Mobile App Meta Tags -->
+  <meta name="theme-color" content="#09090E" id="meta-theme-color" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="DESIONS" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { background-color: #090A0F; color: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    .glass-card { background: rgba(18, 20, 29, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-    .loader { border: 3px solid rgba(255, 255, 255, 0.1); border-top-color: #6366F1; border-radius: 50%; width: 22px; height: 22px; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-  </style>
-</head>
-<body class="min-h-screen flex flex-col items-center p-4 sm:p-6 pb-20">
-
-  <!-- Header -->
-  <header class="w-full max-w-2xl text-center pt-6 pb-6">
-    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-3">
-      <span>⚡</span> Real-Time Outcome Engine
-    </div>
-    <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">Decisions</h1>
-    <p class="text-gray-400 text-sm mt-1">Direct verdicts, side-by-side pros & cons, zero fluff.</p>
-  </header>
-
-  <!-- Main Query Card -->
-  <main class="w-full max-w-2xl space-y-5">
-    <section class="glass-card rounded-2xl p-4 sm:p-5 shadow-2xl">
-      <form id="decision-form" class="space-y-3">
-        <div class="relative">
-          <input
-            id="query-input"
-            type="text"
-            maxlength="250"
-            required
-            value="Should I buy iPhone 18 or 18 Pro Max? I have 1 lakh only"
-            placeholder="e.g. Should I rent in Gurgaon or Noida? Budget 30k"
-            class="w-full bg-[#12141D] text-white placeholder-gray-500 text-sm sm:text-base rounded-xl px-4 py-3.5 pr-28 border border-white/10 focus:outline-none focus:border-indigo-500 transition-colors"
-          />
-          <button
-            type="submit"
-            id="submit-btn"
-            class="absolute right-2 top-2 bottom-2 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-semibold flex items-center gap-2 transition-all"
-          >
-            <span id="btn-text">Decide</span>
-            <div id="btn-spinner" class="loader hidden"></div>
-          </button>
-        </div>
-
-        <!-- Priority Lens Toggles -->
-        <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-          <span class="text-gray-400 font-medium whitespace-nowrap">Priority:</span>
-          <button type="button" class="lens-chip active px-3 py-1 rounded-full bg-indigo-600 text-white font-medium" data-lens="Balanced & Practical">Balanced</button>
-          <button type="button" class="lens-chip px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5" data-lens="Strict Budget & Value for Money">Budget First</button>
-          <button type="button" class="lens-chip px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5" data-lens="Time Saver & Convenience">Save Time</button>
-          <button type="button" class="lens-chip px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5" data-lens="High Quality & Future-Proof">Future-Proof</button>
-        </div>
-      </form>
-
-      <!-- Quick Scenario Test Chips -->
-      <div class="mt-4 pt-3 border-t border-white/5 flex flex-wrap items-center gap-1.5 text-xs text-gray-400">
-        <span class="font-medium mr-1">Quick Test:</span>
-        <button class="test-chip px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5" data-q="Should I buy iPhone 18 or 18 Pro Max? I have 1 lakh only">📱 iPhone Budget</button>
-        <button class="test-chip px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5" data-q="Should I cook dinner at 10 PM or order on Swiggy?">🍲 Cook vs. Swiggy</button>
-        <button class="test-chip px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5" data-q="Should I buy a PS5 Slim or Xbox Series X? Budget 45k">🎮 PS5 vs. Xbox</button>
-        <button class="test-chip px-2.5 py-1 rounded-md bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20" data-q="I have sharp chest pain, should I sleep it off or go to gym?">🚨 Test Guardrail</button>
-      </div>
-    </section>
-
-    <!-- Error Banner -->
-    <div id="error-card" class="hidden rounded-xl p-4 bg-amber-500/10 border border-amber-500/20 text-amber-300 text-sm"></div>
-
-    <!-- Safety Guardrail Blocked State -->
-    <section id="guardrail-card" class="hidden rounded-2xl p-5 bg-rose-950/40 border border-rose-500/30 text-rose-100 shadow-xl space-y-3">
-      <div class="flex items-center gap-2 text-rose-400 font-bold text-sm tracking-wide uppercase">
-        <span class="text-base">🛡️</span> <span id="guardrail-title">Safety Guardrail Triggered</span>
-      </div>
-      <p id="guardrail-message" class="text-sm text-rose-200/90 leading-relaxed"></p>
-      <div class="pt-2 border-t border-rose-500/20 text-xs space-y-1">
-        <p class="font-semibold text-rose-300">Immediate Official Helplines:</p>
-        <div id="helpline-list" class="flex flex-wrap gap-2 pt-1"></div>
-      </div>
-    </section>
-
-    <!-- Results Section -->
-    <section id="results-container" class="space-y-4">
-      <!-- Winner Verdict Banner -->
-      <div id="verdict-card" class="glass-card rounded-2xl p-5 border-l-4 border-l-emerald-500 relative overflow-hidden">
-        <div class="flex items-center justify-between gap-2 mb-1.5">
-          <span class="text-xs uppercase font-bold tracking-wider text-emerald-400 flex items-center gap-1">
-            <span>🏆</span> Recommended Verdict
-          </span>
-          <span id="winner-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/20"></span>
-        </div>
-        <h2 id="verdict-headline" class="text-lg sm:text-xl font-bold text-white tracking-tight"></h2>
-        <p id="verdict-summary" class="text-gray-300 text-sm mt-1.5 leading-relaxed"></p>
-      </div>
-
-      <!-- Side-by-Side Pros & Cons Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <!-- Option A -->
-        <div id="card-a" class="glass-card rounded-xl p-4 space-y-3 transition-all">
-          <div class="border-b border-white/5 pb-2.5">
-            <h3 id="name-a" class="font-bold text-white text-base"></h3>
-            <p id="sub-a" class="text-xs text-gray-400 mt-0.5"></p>
-          </div>
-          <div>
-            <p class="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1.5">Pros</p>
-            <ul id="pros-a" class="space-y-1.5 text-xs text-gray-300"></ul>
-          </div>
-          <div>
-            <p class="text-xs font-semibold text-rose-400 uppercase tracking-wider mb-1.5">Cons</p>
-            <ul id="cons-a" class="space-y-1.5 text-xs text-gray-400"></ul>
-          </div>
-        </div>
-
-        <!-- Option B -->
-        <div id="card-b" class="glass-card rounded-xl p-4 space-y-3 transition-all">
-          <div class="border-b border-white/5 pb-2.5">
-            <h3 id="name-b" class="font-bold text-white text-base"></h3>
-            <p id="sub-b" class="text-xs text-gray-400 mt-0.5"></p>
-          </div>
-          <div>
-            <p class="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1.5">Pros</p>
-            <ul id="pros-b" class="space-y-1.5 text-xs text-gray-300"></ul>
-          </div>
-          <div>
-            <p class="text-xs font-semibold text-rose-400 uppercase tracking-wider mb-1.5">Cons</p>
-            <ul id="cons-b" class="space-y-1.5 text-xs text-gray-400"></ul>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- PWA Install Button -->
-  <button id="pwa-install-btn" style="display: none;" class="fixed bottom-4 right-4 z-50 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg transition-transform hover:scale-105">
-    📲 Install App
-  </button>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Syne (Display), Plus Jakarta Sans (Body), JetBrains Mono (Tags/Scores) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 
   <script>
-    let activeLens = 'Balanced & Practical';
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Syne', 'sans-serif'],
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          },
+          colors: {
+            acid: {
+              lime: '#D4FF00',
+              pink: '#FF2A85',
+              violet: '#8B5CF6',
+              cyan: '#00F5D4',
+              obsidian: '#09090E'
+            }
+          }
+        }
+      }
+    }
+  </script>
 
-    // 1. Lens toggle handling
-    document.querySelectorAll('.lens-chip').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.lens-chip').forEach(b => {
-          b.className = 'lens-chip px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5';
+  <style>
+    /* =========================================================================
+       1. GEN-Z MULTI-VIBE THEME TOKENS (ACID DARK / NEO-POP PAPER / Y2K CHROME)
+       ========================================================================= */
+    :root,
+    [data-theme="acid-dark"] {
+      --bg-primary: #09090E;
+      --bg-elevated: rgba(20, 20, 31, 0.82);
+      --bg-card: rgba(23, 23, 36, 0.88);
+      --bg-input: #12121C;
+      --text-primary: #F8FAFC;
+      --text-secondary: #94A3B8;
+      --accent-main: #D4FF00;
+      --accent-main-text: #09090E;
+      --accent-secondary: #FF2A85;
+      --accent-tertiary: #00F5D4;
+      --accent-violet: #8B5CF6;
+      --border-crisp: rgba(255, 255, 255, 0.16);
+      --border-strong: #D4FF00;
+      --shadow-brutal: 6px 6px 0px #D4FF00;
+      --shadow-brutal-pink: 6px 6px 0px #FF2A85;
+      --shadow-brutal-cyan: 6px 6px 0px #00F5D4;
+      --dot-color: rgba(212, 255, 0, 0.12);
+      --blob-1: rgba(212, 255, 0, 0.16);
+      --blob-2: rgba(255, 42, 133, 0.16);
+      --blob-3: rgba(139, 92, 246, 0.18);
+    }
+
+    [data-theme="neo-pop"] {
+      --bg-primary: #FFFDF5;
+      --bg-elevated: #FFFFFF;
+      --bg-card: #FFFFFF;
+      --bg-input: #F4F1EA;
+      --text-primary: #09090E;
+      --text-secondary: #475569;
+      --accent-main: #FF2A85;
+      --accent-main-text: #FFFFFF;
+      --accent-secondary: #D4FF00;
+      --accent-tertiary: #00F5D4;
+      --accent-violet: #8B5CF6;
+      --border-crisp: #09090E;
+      --border-strong: #09090E;
+      --shadow-brutal: 6px 6px 0px #09090E;
+      --shadow-brutal-pink: 6px 6px 0px #FF2A85;
+      --shadow-brutal-cyan: 6px 6px 0px #09090E;
+      --dot-color: rgba(9, 9, 14, 0.12);
+      --blob-1: rgba(212, 255, 0, 0.35);
+      --blob-2: rgba(255, 42, 133, 0.22);
+      --blob-3: rgba(0, 245, 212, 0.25);
+    }
+
+    [data-theme="y2k-chrome"] {
+      --bg-primary: #130924;
+      --bg-elevated: rgba(34, 17, 62, 0.84);
+      --bg-card: rgba(39, 19, 71, 0.88);
+      --bg-input: #1D0E36;
+      --text-primary: #F5F3FF;
+      --text-secondary: #C4B5FD;
+      --accent-main: #00F5D4;
+      --accent-main-text: #09090E;
+      --accent-secondary: #FF2A85;
+      --accent-tertiary: #D4FF00;
+      --accent-violet: #A855F7;
+      --border-crisp: rgba(0, 245, 212, 0.3);
+      --border-strong: #00F5D4;
+      --shadow-brutal: 6px 6px 0px #00F5D4;
+      --shadow-brutal-pink: 6px 6px 0px #FF2A85;
+      --shadow-brutal-cyan: 6px 6px 0px #D4FF00;
+      --dot-color: rgba(0, 245, 212, 0.16);
+      --blob-1: rgba(0, 245, 212, 0.22);
+      --blob-2: rgba(255, 42, 133, 0.25);
+      --blob-3: rgba(168, 85, 247, 0.25);
+    }
+
+    /* Base Styling & Smooth Theme Transitions */
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+      transition: background-color 0.45s cubic-bezier(0.22, 1, 0.36, 1), color 0.35s ease;
+      position: relative;
+    }
+
+    /* Dot-Matrix Background Grid */
+    .bg-dot-matrix {
+      background-image: radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
+      background-size: 26px 26px;
+    }
+
+    /* Animated Ambient Mesh Blobs */
+    .ambient-blob {
+      position: fixed;
+      border-radius: 9999px;
+      filter: blur(90px);
+      pointer-events: none;
+      z-index: 0;
+      animation: floatBlob 14s ease-in-out infinite alternate;
+    }
+    .blob-one {
+      width: 380px;
+      height: 380px;
+      top: 4%;
+      left: -8%;
+      background: var(--blob-1);
+    }
+    .blob-two {
+      width: 420px;
+      height: 420px;
+      top: 32%;
+      right: -10%;
+      background: var(--blob-2);
+      animation-delay: -5s;
+    }
+    .blob-three {
+      width: 360px;
+      height: 360px;
+      bottom: 5%;
+      left: 20%;
+      background: var(--blob-3);
+      animation-delay: -9s;
+    }
+
+    @keyframes floatBlob {
+      0% { transform: translate(0px, 0px) scale(1); }
+      50% { transform: translate(35px, -30px) scale(1.08); }
+      100% { transform: translate(-25px, 25px) scale(0.94); }
+    }
+
+    /* Neo-Brutalist Card & Button Primitives */
+    .neo-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border-crisp);
+      backdrop-filter: blur(16px);
+      transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s ease, border-color 0.28s ease, background-color 0.4s ease;
+    }
+    [data-theme="neo-pop"] .neo-card {
+      border-width: 3px;
+      box-shadow: 5px 5px 0px #09090E;
+    }
+
+    .neo-card-hover:hover {
+      transform: translate(-4px, -4px);
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-brutal);
+    }
+
+    .neo-btn-primary {
+      background: var(--accent-main);
+      color: var(--accent-main-text);
+      border: 2px solid #09090E;
+      box-shadow: 4px 4px 0px var(--accent-secondary);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+    }
+    .neo-btn-primary:hover {
+      transform: translate(-2px, -2px) scale(1.02);
+      box-shadow: 6px 6px 0px var(--accent-secondary);
+    }
+    .neo-btn-primary:active {
+      transform: translate(2px, 2px);
+      box-shadow: 0px 0px 0px var(--accent-secondary);
+    }
+
+    /* Top Infinite Kinetic Marquee Ticker */
+    .marquee-track {
+      display: flex;
+      width: max-content;
+      animation: scrollMarquee 22s linear infinite;
+    }
+    .marquee-track:hover {
+      animation-play-state: paused;
+    }
+    @keyframes scrollMarquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* Floating Sticker Badges in Hero */
+    .floating-sticker {
+      animation: stickerBob 4s ease-in-out infinite;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+      user-select: none;
+    }
+    .floating-sticker:hover {
+      transform: scale(1.14) rotate(8deg) !important;
+    }
+    @keyframes stickerBob {
+      0%, 100% { transform: translateY(0px) rotate(-4deg); }
+      50% { transform: translateY(-8px) rotate(3deg); }
+    }
+
+    /* Dramatic Verdict Stamp Slam Animation */
+    .verdict-slam {
+      animation: slamDown 0.55s cubic-bezier(0.22, 1.4, 0.36, 1) forwards;
+    }
+    @keyframes slamDown {
+      0% { opacity: 0; transform: scale(1.18) translateY(-24px) rotate(-2deg); }
+      65% { opacity: 1; transform: scale(0.97) translateY(4px) rotate(0.5deg); }
+      100% { opacity: 1; transform: scale(1) translateY(0) rotate(0deg); }
+    }
+
+    /* Staggered List Slide-In */
+    .stagger-item {
+      opacity: 0;
+      transform: translateX(-14px);
+      animation: slideInRight 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    @keyframes slideInRight {
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Screen Shake for Medical/Crisis Guardrail Block */
+    .guardrail-shake {
+      animation: emergencyShake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+    @keyframes emergencyShake {
+      10%, 90% { transform: translate3d(-3px, 0, 0); }
+      20%, 80% { transform: translate3d(5px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-7px, 0, 0); }
+      40%, 60% { transform: translate3d(7px, 0, 0); }
+    }
+
+    /* Pulsing VS Battle Lightning Badge */
+    .vs-orb {
+      animation: pulseVs 2s infinite ease-in-out;
+    }
+    @keyframes pulseVs {
+      0%, 100% { transform: scale(1) rotate(-6deg); box-shadow: 0 0 0 0 rgba(212, 255, 0, 0.5); }
+      50% { transform: scale(1.12) rotate(6deg); box-shadow: 0 0 28px 6px rgba(255, 42, 133, 0.55); }
+    }
+
+    /* 3D Perspective Tilt Battle Cards */
+    .tilt-card {
+      transform-style: preserve-3d;
+      will-change: transform;
+      position: relative;
+    }
+    .tilt-glare {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.14), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      border-radius: inherit;
+    }
+    .tilt-card:hover .tilt-glare {
+      opacity: 1;
+    }
+
+    /* Scroll-Triggered Fold Reveal Animations */
+    .reveal-on-scroll {
+      opacity: 0;
+      transform: translateY(42px) scale(0.96) rotate(1deg);
+      transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .reveal-on-scroll.is-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1) rotate(0deg);
+    }
+
+    /* Circular Wave Overlay for Vibe Switcher */
+    #vibe-wave-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9998;
+      clip-path: circle(0% at 85% 5%);
+      transition: clip-path 0.65s cubic-bezier(0.65, 0, 0.35, 1);
+    }
+
+    /* Hide Scrollbars for Pill Strips */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-dot-matrix min-h-screen flex flex-col selection:bg-[#D4FF00] selection:text-[#09090E]">
+
+  <!-- Confetti & Particle Burst Canvas Overlay -->
+  <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+  <!-- Vibe Wave Transition Flash Layer -->
+  <div id="vibe-wave-overlay"></div>
+
+  <!-- Ambient Floating Neon Blobs -->
+  <div class="ambient-blob blob-one"></div>
+  <div class="ambient-blob blob-two"></div>
+  <div class="ambient-blob blob-three"></div>
+
+  <!-- ===================================================================== -->
+  <!-- TOP KINETIC MARQUEE TICKER                                            -->
+  <!-- ===================================================================== -->
+  <div class="w-full bg-[#D4FF00] text-[#09090E] border-b-2 border-[#09090E] py-1.5 overflow-hidden relative z-40 font-mono text-xs font-extrabold tracking-wider uppercase">
+    <div class="marquee-track">
+      <span class="mx-4">⚡ NO CAP VERDICTS</span>
+      <span class="mx-4">• ZERO OVERTHINKING</span>
+      <span class="mx-4">• INSTANT PROS &amp; CONS</span>
+      <span class="mx-4">• STRICT MEDICAL &amp; LIFE-SAFETY GUARDRAILS</span>
+      <span class="mx-4">• REAL RUPEE MATH</span>
+      <span class="mx-4">• 3D OUTCOME ARENA</span>
+      <span class="mx-4">• PICK YOUR VIBE</span>
+      <span class="mx-4">⚡ NO CAP VERDICTS</span>
+      <span class="mx-4">• ZERO OVERTHINKING</span>
+      <span class="mx-4">• INSTANT PROS &amp; CONS</span>
+      <span class="mx-4">• STRICT MEDICAL &amp; LIFE-SAFETY GUARDRAILS</span>
+      <span class="mx-4">• REAL RUPEE MATH</span>
+      <span class="mx-4">• 3D OUTCOME ARENA</span>
+      <span class="mx-4">• PICK YOUR VIBE</span>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- STICKY NAVBAR WITH INTERACTIVE VIBE SWITCHER                          -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-40 backdrop-blur-xl border-b-2" style="background: var(--bg-elevated); border-color: var(--border-crisp);">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+
+      <!-- Brand Logo -->
+      <a href="#fold-hero" class="flex items-center gap-2.5 group">
+        <div class="w-10 h-10 rounded-xl bg-[#D4FF00] text-[#09090E] border-2 border-[#09090E] flex items-center justify-center font-display font-extrabold text-xl shadow-[3px_3px_0px_#FF2A85] group-hover:rotate-12 transition-transform">
+          D⚡
+        </div>
+        <div>
+          <span class="font-display font-extrabold text-xl sm:text-2xl tracking-tight block leading-none">
+            DESIONS
+          </span>
+          <span class="font-mono text-[10px] uppercase tracking-widest opacity-75 block">
+            OUTCOME ENGINE v3.0
+          </span>
+        </div>
+      </a>
+
+      <!-- Center Quick Jump Links (Desktop) -->
+      <nav class="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-wider">
+        <a href="#fold-arena" class="hover:text-[#D4FF00] transition">⚡ Live Arena</a>
+        <a href="#fold-bento" class="hover:text-[#FF2A85] transition">🔥 Trending Drops</a>
+        <a href="#fold-brain" class="hover:text-[#00F5D4] transition">🛡️ Guardrail Lab</a>
+      </nav>
+
+      <!-- Right Side: Interactive Vibe Switcher + PWA App Install -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Vibe Switch Button -->
+        <button
+          id="vibe-switch-btn"
+          onclick="cycleVibeTheme(event)"
+          class="px-3.5 py-2 rounded-xl font-mono text-xs font-extrabold uppercase tracking-wider border-2 border-[#09090E] bg-[#FF2A85] text-white shadow-[3px_3px_0px_#D4FF00] hover:translate-y-[-2px] active:translate-y-[1px] transition-all flex items-center gap-1.5 cursor-pointer"
+          title="Switch Color Vibe"
+        >
+          <span id="vibe-icon">🌙</span>
+          <span id="vibe-label">VIBE: ACID DARK</span>
+        </button>
+
+        <!-- Install PWA Button -->
+        <button
+          onclick="triggerAppInstall()"
+          class="px-3 py-2 rounded-xl font-mono text-xs font-bold border-2 transition-all hover:scale-105 flex items-center gap-1.5"
+          style="border-color: var(--border-crisp); background: var(--bg-card);"
+        >
+          <i data-lucide="smartphone" class="w-3.5 h-3.5 text-[#00F5D4]"></i>
+          <span class="hidden sm:inline">Get App</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- FOLD 1: KINETIC HERO & SPLIT COMMAND BAR                              -->
+  <!-- ===================================================================== -->
+  <section id="fold-hero" class="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 pt-8 sm:pt-14 pb-10">
+
+    <!-- Floating Animated Sticker Badges -->
+    <div class="flex flex-wrap items-center justify-center gap-3 mb-5">
+      <span
+        onclick="fireConfettiBurst(window.innerWidth * 0.35, 160)"
+        class="floating-sticker px-3 py-1 rounded-full bg-[#D4FF00] text-[#09090E] border-2 border-[#09090E] font-mono text-[11px] font-extrabold uppercase tracking-wider shadow-[3px_3px_0px_#09090E]"
+      >
+        ✦ 100% REAL MATH
+      </span>
+      <span
+        onclick="fireConfettiBurst(window.innerWidth * 0.5, 160)"
+        style="animation-delay: -1.4s;"
+        class="floating-sticker px-3 py-1 rounded-full bg-[#FF2A85] text-white border-2 border-[#09090E] font-mono text-[11px] font-extrabold uppercase tracking-wider shadow-[3px_3px_0px_#D4FF00]"
+      >
+        ⚡ ZERO FLUFF
+      </span>
+      <span
+        onclick="fireConfettiBurst(window.innerWidth * 0.65, 160)"
+        style="animation-delay: -2.7s;"
+        class="floating-sticker px-3 py-1 rounded-full bg-[#00F5D4] text-[#09090E] border-2 border-[#09090E] font-mono text-[11px] font-extrabold uppercase tracking-wider shadow-[3px_3px_0px_#8B5CF6]"
+      >
+        🛡️ VIBE &amp; SAFETY CHECKED
+      </span>
+    </div>
+
+    <!-- Main Kinetic Headline -->
+    <div class="text-center max-w-4xl mx-auto space-y-4">
+      <h1 class="font-display font-extrabold text-4xl sm:text-6xl md:text-7xl tracking-tight leading-[1.03]">
+        STOP OVERTHINKING.<br />
+        <span class="inline-block px-3 py-0.5 rounded-2xl bg-[#D4FF00] text-[#09090E] border-2 border-[#09090E] shadow-[5px_5px_0px_#FF2A85] -rotate-1 mt-1">
+          GET THE VERDICT.
+        </span>
+      </h1>
+      <p class="text-sm sm:text-lg max-w-2xl mx-auto font-medium" style="color: var(--text-secondary);">
+        Drop any everyday dilemma with your real budget or time cap. We run the outcome math, side-by-side <span class="font-bold underline decoration-[#FF2A85] decoration-2">Pros &amp; Cons</span>, and give you a clear <span class="font-mono font-bold text-[#D4FF00] bg-[#09090E] px-1.5 py-0.5 rounded">W</span> in 2 seconds.
+      </p>
+    </div>
+
+    <!-- SPLIT COMMAND BAR (Priority Vibe Selector + Dilemma Input + Magnetic Decide Button) -->
+    <div class="mt-8 max-w-4xl mx-auto">
+      <form
+        id="decision-form"
+        onsubmit="handleFormSubmit(event)"
+        class="neo-card rounded-3xl p-2.5 sm:p-3 shadow-[8px_8px_0px_#D4FF00] transition-all"
+      >
+        <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
+
+          <!-- Left Side: Priority Vibe Selector -->
+          <div class="flex items-center px-3.5 py-3 rounded-2xl border-2 md:w-64 shrink-0" style="background: var(--bg-input); border-color: var(--border-crisp);">
+            <span class="text-lg mr-2 shrink-0">🎯</span>
+            <div class="w-full">
+              <label for="lens-select" class="block font-mono text-[10px] uppercase tracking-widest opacity-70">
+                PRIORITY MODE
+              </label>
+              <select
+                id="lens-select"
+                onchange="handleLensChange(this.value)"
+                class="w-full bg-transparent font-bold text-xs sm:text-sm focus:outline-none cursor-pointer truncate"
+                style="color: var(--text-primary);"
+              >
+                <option value="Strict Budget & Value for Money" class="bg-[#09090E] text-white">💸 Broke / Budget First</option>
+                <option value="Balanced & Practical" class="bg-[#09090E] text-white">⚖️ Balanced Logic</option>
+                <option value="Time Saver & Convenience" class="bg-[#09090E] text-white">⚡ Speedrun / Save Time</option>
+                <option value="High Quality & Future-Proof" class="bg-[#09090E] text-white">👑 Main Character / Max Quality</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Right Side: Dilemma Input + Clear + Magnetic DECIDE Button -->
+          <div class="flex-1 flex items-center rounded-2xl border-2 px-3 py-1.5" style="background: var(--bg-input); border-color: var(--border-crisp);">
+            <input
+              id="query-input"
+              type="text"
+              maxlength="250"
+              required
+              value="Should I buy iPhone 18 or 18 Pro Max? I have 1 lakh only"
+              placeholder="Ask anything: e.g. Buy iPhone 18 or 18 Pro Max? I have 1 lakh only"
+              class="w-full bg-transparent text-sm sm:text-base font-bold focus:outline-none pr-2"
+              style="color: var(--text-primary);"
+            />
+            <button
+              type="button"
+              onclick="clearSearchInput()"
+              title="Clear input"
+              class="p-1.5 opacity-60 hover:opacity-100 transition shrink-0"
+            >
+              <i data-lucide="x-circle" class="w-4 h-4"></i>
+            </button>
+            <button
+              type="submit"
+              id="submit-btn"
+              class="neo-btn-primary ml-1.5 px-5 sm:px-7 py-3 rounded-xl font-display font-extrabold text-sm sm:text-base tracking-wide uppercase flex items-center gap-2 shrink-0 cursor-pointer"
+            >
+              <span id="btn-text">DECIDE ⚡</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Quick Scenario Pills Underneath -->
+        <div class="mt-3 pt-2.5 border-t flex items-center gap-2 overflow-x-auto no-scrollbar text-xs font-mono" style="border-color: var(--border-crisp);">
+          <span class="font-bold uppercase opacity-70 shrink-0 pl-1">TRY DROP:</span>
+
+          <button
+            type="button"
+            onclick="loadScenario('iphone', event)"
+            class="shrink-0 px-3 py-1.5 rounded-xl font-bold border transition hover:scale-105 bg-[#D4FF00]/15 border-[#D4FF00]/50"
+          >
+            📱 iPhone ₹1L Dilemma
+          </button>
+
+          <button
+            type="button"
+            onclick="loadScenario('biryani', event)"
+            class="shrink-0 px-3 py-1.5 rounded-xl font-bold border transition hover:scale-105"
+            style="border-color: var(--border-crisp); background: var(--bg-input);"
+          >
+            🍕 11 PM Cook vs Order
+          </button>
+
+          <button
+            type="button"
+            onclick="loadScenario('console', event)"
+            class="shrink-0 px-3 py-1.5 rounded-xl font-bold border transition hover:scale-105"
+            style="border-color: var(--border-crisp); background: var(--bg-input);"
+          >
+            🎮 PS5 Slim vs Xbox 45k
+          </button>
+
+          <button
+            type="button"
+            onclick="loadScenario('living', event)"
+            class="shrink-0 px-3 py-1.5 rounded-xl font-bold border transition hover:scale-105"
+            style="border-color: var(--border-crisp); background: var(--bg-input);"
+          >
+            🏙️ Gurgaon vs Noida Rent
+          </button>
+
+          <button
+            type="button"
+            onclick="runGuardrailTest(event)"
+            class="shrink-0 px-3 py-1.5 rounded-xl font-extrabold border-2 border-[#FF2A85] bg-[#FF2A85]/20 text-[#FF2A85] transition hover:scale-105"
+          >
+            🚨 Test Safety Guardrail
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- FOLD 2: THE LIVE VERDICT ARENA (SLOT SHUFFLE + 3D TILT BATTLE CARDS)  -->
+  <!-- ===================================================================== -->
+  <section id="fold-arena" class="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-6">
+
+    <!-- Arena Status Bar -->
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b pb-3" style="border-color: var(--border-crisp);">
+      <div class="flex items-center gap-2.5">
+        <span class="px-3 py-1 rounded-lg bg-[#D4FF00] text-[#09090E] font-mono text-xs font-extrabold uppercase border border-[#09090E]">
+          FOLD 02 // VERDICT ARENA
+        </span>
+        <span id="active-lens-badge" class="font-mono text-xs font-bold opacity-80">
+          VIBE: 💸 Broke / Budget First
+        </span>
+      </div>
+      <span id="engine-status-pill" class="font-mono text-xs px-2.5 py-1 rounded-md border" style="border-color: var(--border-crisp); color: var(--text-secondary);">
+        ⚡ Instant Outcome Matrix Ready
+      </span>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- KINETIC SLOT-MACHINE / RADAR SHUFFLE LOADER (HIDDEN UNLESS DECIDING)-->
+    <!-- =================================================================== -->
+    <div id="shuffle-loader" class="hidden neo-card rounded-3xl p-8 sm:p-12 text-center space-y-4 border-2 border-[#D4FF00] shadow-[8px_8px_0px_#FF2A85]">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#D4FF00] text-[#09090E] border-2 border-[#09090E] font-display font-extrabold text-2xl animate-spin">
+        ⚡
+      </div>
+      <div class="font-mono text-xs uppercase tracking-widest text-[#FF2A85] font-extrabold">
+        RUNNING OUTCOME SIMULATIONS...
+      </div>
+      <div id="shuffle-slot-text" class="font-display font-extrabold text-2xl sm:text-4xl tracking-tight">
+        CRUNCHING RUPEE vs REGRET MATRIX...
+      </div>
+      <div class="w-full max-w-md mx-auto h-3 rounded-full bg-black/40 border border-white/20 overflow-hidden">
+        <div id="shuffle-progress-bar" class="h-full bg-gradient-to-r from-[#D4FF00] via-[#FF2A85] to-[#00F5D4] w-1/3 transition-all duration-150"></div>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- SAFETY GUARDRAIL SHIELD SCREEN (SHAKES & BLOCKS MEDICAL/CRISIS)     -->
+    <!-- =================================================================== -->
+    <div id="guardrail-card" class="hidden neo-card rounded-3xl p-6 sm:p-9 border-4 border-[#FF2A85] shadow-[10px_10px_0px_#FF2A85] space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b" style="border-color: var(--border-crisp);">
+        <div class="flex items-start sm:items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-[#FF2A85] text-white border-2 border-[#09090E] flex items-center justify-center shrink-0 text-2xl font-extrabold shadow-[4px_4px_0px_#D4FF00]">
+            🛡️
+          </div>
+          <div>
+            <span class="inline-block font-mono text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-md bg-[#FF2A85] text-white border border-[#09090E]">
+              GUARDRAIL SHIELD ACTIVE // HARD BLOCK
+            </span>
+            <h2 id="guardrail-title" class="font-display text-2xl sm:text-3xl font-extrabold mt-1.5">
+              Medical, Doctor &amp; Life-Safety Exclusion
+            </h2>
+          </div>
+        </div>
+        <button
+          onclick="loadScenario('iphone', event)"
+          class="px-4 py-2.5 rounded-xl bg-[#D4FF00] text-[#09090E] border-2 border-[#09090E] font-mono text-xs font-extrabold uppercase shadow-[3px_3px_0px_#09090E] hover:scale-105 transition self-start sm:self-center shrink-0"
+        >
+          ← Back to Safe Dilemma
+        </button>
+      </div>
+
+      <p id="guardrail-message" class="text-sm sm:text-base font-medium leading-relaxed">
+        Desions is built strictly for everyday lifestyle, shopping, food, career, and budget choices. It is hard-blocked from evaluating medical symptoms, doctor advice, medication dosages, life-threatening emergencies, death, or self-harm.
+      </p>
+
+      <!-- Clickable 24/7 Emergency Helplines -->
+      <div class="space-y-3">
+        <div class="font-mono text-xs font-extrabold uppercase tracking-wider text-[#FF2A85]">
+          IMMEDIATE 24/7 OFFICIAL HELPLINES (TAP TO CALL):
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          <a href="tel:112" class="p-4 rounded-2xl border-2 border-[#FF2A85] bg-[#FF2A85]/15 hover:bg-[#FF2A85]/25 transition flex items-center justify-between">
+            <div>
+              <div class="font-mono text-[11px] font-bold uppercase text-[#FF2A85]">National Emergency</div>
+              <div class="font-display text-xl font-extrabold">Dial 112</div>
+            </div>
+            <i data-lucide="phone-call" class="w-5 h-5 text-[#FF2A85]"></i>
+          </a>
+          <a href="tel:18602662345" class="p-4 rounded-2xl border-2 transition flex items-center justify-between hover:border-[#00F5D4]" style="border-color: var(--border-crisp); background: var(--bg-input);">
+            <div>
+              <div class="font-mono text-[11px] font-bold uppercase opacity-75">Vandrevala Crisis Line</div>
+              <div class="font-display text-lg font-extrabold">1860-2662-345</div>
+            </div>
+            <i data-lucide="phone-call" class="w-5 h-5 text-[#00F5D4]"></i>
+          </a>
+          <a href="tel:14416" class="p-4 rounded-2xl border-2 transition flex items-center justify-between hover:border-[#D4FF00]" style="border-color: var(--border-crisp); background: var(--bg-input);">
+            <div>
+              <div class="font-mono text-[11px] font-bold uppercase opacity-75">Tele-MANAS / KIRAN</div>
+              <div class="font-display text-xl font-extrabold">Dial 14416</div>
+            </div>
+            <i data-lucide="phone-call" class="w-5 h-5 text-[#D4FF00]"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- LIVE RESULTS CONTAINER (WINNER BANNER + 3D TILT BATTLE CARDS)       -->
+    <!-- =================================================================== -->
+    <div id="results-container" class="space-y-8">
+
+      <!-- 1. CERTIFIED W VERDICT BANNER -->
+      <div id="verdict-banner-card" class="neo-card verdict-slam rounded-3xl p-6 sm:p-8 border-2 border-[#D4FF00] shadow-[8px_8px_0px_#D4FF00] relative overflow-hidden">
+        <!-- Top Row: W Stamp + Vibe Score + Share Buttons -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b" style="border-color: var(--border-crisp);">
+          <div class="flex flex-wrap items-center gap-2.5">
+            <span class="px-3.5 py-1 rounded-xl bg-[#D4FF00] text-[#09090E] border-2 border-[#09090E] font-mono text-xs sm:text-sm font-extrabold uppercase shadow-[3px_3px_0px_#FF2A85]">
+              🏆 CERTIFIED W VERDICT
+            </span>
+            <span id="winner-pill-name" class="px-3 py-1 rounded-xl bg-[#FF2A85] text-white border-2 border-[#09090E] font-mono text-xs font-extrabold uppercase">
+              OPTION A WINS
+            </span>
+            <span id="vibe-score-badge" class="px-3 py-1 rounded-xl bg-[#00F5D4] text-[#09090E] border-2 border-[#09090E] font-mono text-xs font-extrabold">
+              9.6/10 VIBE SCORE
+            </span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              onclick="shareVerdictCard()"
+              class="px-4 py-2 rounded-xl bg-[#D4FF00] text-[#09090E] border-2 border-[#09090E] font-mono text-xs font-extrabold uppercase shadow-[3px_3px_0px_#09090E] hover:scale-105 transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+              <span>📲 Share Verdict Card</span>
+            </button>
+            <button
+              onclick="copyVerdictToClipboard()"
+              class="px-3 py-2 rounded-xl border-2 font-mono text-xs font-bold hover:scale-105 transition flex items-center gap-1 cursor-pointer"
+              style="border-color: var(--border-crisp); background: var(--bg-input);"
+            >
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              <span>Copy</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Verdict Headline & 2-Sentence Explanation -->
+        <div class="mt-5 space-y-2.5">
+          <div id="verdict-question-label" class="font-mono text-xs font-bold uppercase tracking-wider opacity-70">
+            DILEMMA: "Should I buy iPhone 18 or 18 Pro Max? I have 1 lakh only"
+          </div>
+          <h2 id="verdict-headline" class="font-display text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+            Buy the iPhone 18 and pocket ₹20,100 cash — zero EMI trap.
+          </h2>
+          <p id="verdict-summary" class="text-sm sm:text-base font-medium leading-relaxed" style="color: var(--text-secondary);">
+            With a strict ₹1,00,000 budget, the iPhone 18 (~₹79,900) fits effortlessly with ₹20,100 left over for AirPods or AppleCare+. The iPhone 18 Pro Max (~₹1,44,900) blows past your cap by ₹45,000 and locks you into unnecessary EMI stress.
+          </p>
+        </div>
+      </div>
+
+      <!-- 2. SIDE-BY-SIDE 3D TILT BATTLE CARDS (OPTION A vs OPTION B) -->
+      <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-7 items-stretch">
+
+        <!-- Animated Pulsing Center "VS" Lightning Badge (Desktop Center, Mobile Between) -->
+        <div class="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-16 h-16 rounded-2xl bg-[#FF2A85] text-white border-4 border-[#09090E] items-center justify-center font-display font-extrabold text-xl vs-orb pointer-events-none">
+          VS⚡
+        </div>
+
+        <!-- ================= OPTION A 3D TILT CARD ================= -->
+        <article
+          id="card-a"
+          onmousemove="handleCardTilt(event, this)"
+          onmouseleave="resetCardTilt(this)"
+          class="tilt-card neo-card rounded-3xl p-6 sm:p-7 flex flex-col justify-between border-2 border-[#D4FF00] shadow-[8px_8px_0px_#D4FF00]"
+        >
+          <div class="tilt-glare"></div>
+
+          <div class="space-y-5 relative z-10">
+            <!-- Top Status Tag + Score -->
+            <div class="flex items-center justify-between gap-2">
+              <span id="badge-a" class="px-3 py-1 rounded-xl bg-[#D4FF00] text-[#09090E] border-2 border-[#09090E] font-mono text-xs font-extrabold uppercase">
+                CERTIFIED W 🏆
+              </span>
+              <span id="score-a" class="font-mono text-sm font-extrabold px-3 py-1 rounded-xl bg-[#09090E] text-[#D4FF00] border border-[#D4FF00]">
+                9.5 / 10
+              </span>
+            </div>
+
+            <!-- Option A Name & Price/Effort Tag -->
+            <div class="pb-4 border-b" style="border-color: var(--border-crisp);">
+              <h3 id="name-a" class="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">
+                iPhone 18
+              </h3>
+              <p id="sub-a" class="font-mono text-xs sm:text-sm font-bold mt-1 text-[#00F5D4]">
+                ~₹79,900 • Fits ₹1L Budget (₹20,100 Saved)
+              </p>
+            </div>
+
+            <!-- PROS List -->
+            <div>
+              <div class="font-mono text-xs font-extrabold uppercase tracking-wider text-[#D4FF00] bg-[#09090E] inline-block px-2.5 py-1 rounded-md mb-3 border border-[#D4FF00]/40">
+                ✦ PROS (WHY IT SLAPS)
+              </div>
+              <ul id="pros-a" class="space-y-2.5 text-sm font-semibold"></ul>
+            </div>
+
+            <!-- CONS List -->
+            <div class="pt-3 border-t border-dashed" style="border-color: var(--border-crisp);">
+              <div class="font-mono text-xs font-extrabold uppercase tracking-wider text-[#FF2A85] bg-[#09090E] inline-block px-2.5 py-1 rounded-md mb-3 border border-[#FF2A85]/40">
+                ✕ CONS (THE CATCH)
+              </div>
+              <ul id="cons-a" class="space-y-2.5 text-sm opacity-85"></ul>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-3 border-t flex items-center justify-between font-mono text-[11px] opacity-75 relative z-10" style="border-color: var(--border-crisp);">
+            <span id="footer-a">⚡ Move cursor to 3D tilt card</span>
+            <span>OPTION_A // VERIFIED</span>
+          </div>
+        </article>
+
+        <!-- Mobile VS Divider -->
+        <div class="flex lg:hidden items-center justify-center -my-3 z-20">
+          <div class="px-5 py-2 rounded-2xl bg-[#FF2A85] text-white border-2 border-[#09090E] font-display font-extrabold text-base vs-orb">
+            VS ⚡ BATTLE
+          </div>
+        </div>
+
+        <!-- ================= OPTION B 3D TILT CARD ================= -->
+        <article
+          id="card-b"
+          onmousemove="handleCardTilt(event, this)"
+          onmouseleave="resetCardTilt(this)"
+          class="tilt-card neo-card rounded-3xl p-6 sm:p-7 flex flex-col justify-between"
+        >
+          <div class="tilt-glare"></div>
+
+          <div class="space-y-5 relative z-10">
+            <!-- Top Status Tag + Score -->
+            <div class="flex items-center justify-between gap-2">
+              <span id="badge-b" class="px-3 py-1 rounded-xl bg-[#FF2A85]/20 text-[#FF2A85] border-2 border-[#FF2A85] font-mono text-xs font-extrabold uppercase">
+                BUDGET L / RUNNER UP
+              </span>
+              <span id="score-b" class="font-mono text-sm font-extrabold px-3 py-1 rounded-xl bg-[#09090E] text-[#FF2A85] border border-[#FF2A85]">
+                6.7 / 10
+              </span>
+            </div>
+
+            <!-- Option B Name & Price/Effort Tag -->
+            <div class="pb-4 border-b" style="border-color: var(--border-crisp);">
+              <h3 id="name-b" class="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">
+                iPhone 18 Pro Max
+              </h3>
+              <p id="sub-b" class="font-mono text-xs sm:text-sm font-bold mt-1 text-[#FF2A85]">
+                ~₹1,44,900 • ₹45,000 Over Your Budget
+              </p>
+            </div>
+
+            <!-- PROS List -->
+            <div>
+              <div class="font-mono text-xs font-extrabold uppercase tracking-wider text-[#D4FF00] bg-[#09090E] inline-block px-2.5 py-1 rounded-md mb-3 border border-[#D4FF00]/40">
+                ✦ PROS (WHY IT SLAPS)
+              </div>
+              <ul id="pros-b" class="space-y-2.5 text-sm font-semibold"></ul>
+            </div>
+
+            <!-- CONS List -->
+            <div class="pt-3 border-t border-dashed" style="border-color: var(--border-crisp);">
+              <div class="font-mono text-xs font-extrabold uppercase tracking-wider text-[#FF2A85] bg-[#09090E] inline-block px-2.5 py-1 rounded-md mb-3 border border-[#FF2A85]/40">
+                ✕ CONS (THE CATCH)
+              </div>
+              <ul id="cons-b" class="space-y-2.5 text-sm opacity-85"></ul>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-3 border-t flex items-center justify-between font-mono text-[11px] opacity-75 relative z-10" style="border-color: var(--border-crisp);">
+            <span id="footer-b">⚡ Move cursor to 3D tilt card</span>
+            <span>OPTION_B // VERIFIED</span>
+          </div>
+        </article>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- FOLD 3: SCROLL-REVEALED BENTO GRID — "TRENDING DILEMMA DROPS"         -->
+  <!-- ===================================================================== -->
+  <section id="fold-bento" class="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 py-12 sm:py-16 space-y-7">
+
+    <div class="reveal-on-scroll flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+      <div>
+        <span class="px-3 py-1 rounded-lg bg-[#FF2A85] text-white font-mono text-xs font-extrabold uppercase border border-[#09090E]">
+          FOLD 03 // CURATED DROPS
+        </span>
+        <h2 class="font-display text-3xl sm:text-5xl font-extrabold tracking-tight mt-2">
+          TRENDING DILEMMA PACKS
+        </h2>
+      </div>
+      <p class="font-mono text-xs sm:text-sm opacity-75 max-w-xs">
+        Tap any Bento card to launch the slot-shuffle &amp; slam the verdict above ↑
+      </p>
+    </div>
+
+    <!-- Asymmetric Gen-Z Bento Grid (12 Columns on Desktop) -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+
+      <!-- Bento Pack 1: Tech & Flagships Under ₹1L (7 cols) -->
+      <button
+        onclick="loadScenario('iphone', event)"
+        class="reveal-on-scroll md:col-span-7 neo-card neo-card-hover rounded-3xl p-6 sm:p-8 text-left flex flex-col justify-between min-h-[250px] relative overflow-hidden group cursor-pointer"
+      >
+        <div class="flex items-center justify-between w-full">
+          <span class="px-3 py-1 rounded-xl bg-[#D4FF00] text-[#09090E] border-2 border-[#09090E] font-mono text-xs font-extrabold uppercase">
+            🔥 #1 MOST RUN DROP
+          </span>
+          <span class="text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform">📱</span>
+        </div>
+
+        <div class="space-y-2 mt-8">
+          <div class="font-mono text-xs font-bold text-[#00F5D4] uppercase">TECH &amp; FLAGSHIPS UNDER ₹1 LAKH</div>
+          <h3 class="font-display text-2xl sm:text-3xl font-extrabold leading-tight">
+            iPhone 18 vs. iPhone 18 Pro Max on a Strict ₹1,00,000 Cap
+          </h3>
+          <p class="text-xs sm:text-sm opacity-80">
+            See why saving ₹20,100 cash beats stretching ₹45,000 into credit card EMIs.
+          </p>
+          <div class="pt-2 inline-flex items-center gap-1.5 font-mono text-xs font-extrabold text-[#D4FF00] bg-[#09090E] px-3 py-1.5 rounded-lg border border-[#D4FF00]">
+            <span>LAUNCH BATTLE IN ARENA</span>
+            <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+          </div>
+        </div>
+      </button>
+
+      <!-- Bento Pack 2: Late Night Cravings (5 cols) -->
+      <button
+        onclick="loadScenario('biryani', event)"
+        class="reveal-on-scroll md:col-span-5 neo-card neo-card-hover rounded-3xl p-6 sm:p-8 text-left flex flex-col justify-between min-h-[250px] relative overflow-hidden group cursor-pointer"
+      >
+        <div class="flex items-center justify-between w-full">
+          <span class="px-3 py-1 rounded-xl bg-[#FF2A85] text-white border-2 border-[#09090E] font-mono text-xs font-extrabold uppercase">
+            🌙 11:00 PM DILEMMA
+          </span>
+          <span class="text-4xl group-hover:scale-125 group-hover:-rotate-12 transition-transform">🍕</span>
+        </div>
+
+        <div class="space-y-2 mt-8">
+          <div class="font-mono text-xs font-bold text-[#FF2A85] uppercase">LATE NIGHT CRAVINGS</div>
+          <h3 class="font-display text-2xl font-extrabold leading-tight">
+            Order ₹360 Biryani vs. Cook 10-Min Maggi at Home
+          </h3>
+          <p class="text-xs sm:text-sm opacity-80">
+            Delivery surge fees &amp; midnight acidity vs. 10-minute hot noodles.
+          </p>
+          <div class="pt-2 inline-flex items-center gap-1.5 font-mono text-xs font-extrabold text-white bg-[#FF2A85] px-3 py-1.5 rounded-lg border border-[#09090E]">
+            <span>RUN CRAVING MATH</span>
+            <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+          </div>
+        </div>
+      </button>
+
+      <!-- Bento Pack 3: Console & Setup Wars (5 cols) -->
+      <button
+        onclick="loadScenario('console', event)"
+        class="reveal-on-scroll md:col-span-5 neo-card neo-card-hover rounded-3xl p-6 sm:p-8 text-left flex flex-col justify-between min-h-[250px] relative overflow-hidden group cursor-pointer"
+      >
+        <div class="flex items-center justify-between w-full">
+          <span class="px-3 py-1 rounded-xl bg-[#00F5D4] text-[#09090E] border-2 border-[#09090E] font-mono text-xs font-extrabold uppercase">
+            🎮 ₹45K GAMING CAP
+          </span>
+          <span class="text-4xl group-hover:scale-125 group-hover:rotate-12 transition-transform">🕹️</span>
+        </div>
+
+        <div class="space-y-2 mt-8">
+          <div class="font-mono text-xs font-bold text-[#00F5D4] uppercase">CONSOLE &amp; SETUP WARS</div>
+          <h3 class="font-display text-2xl font-extrabold leading-tight">
+            PS5 Slim vs. Xbox Series X Under ₹45,000
+          </h3>
+          <p class="text-xs sm:text-sm opacity-80">
+            GTA VI &amp; Spider-Man exclusives vs. Game Pass day-one library.
+          </p>
+          <div class="pt-2 inline-flex items-center gap-1.5 font-mono text-xs font-extrabold text-[#09090E] bg-[#00F5D4] px-3 py-1.5 rounded-lg border border-[#09090E]">
+            <span>SETTLE CONSOLE WAR</span>
+            <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+          </div>
+        </div>
+      </button>
+
+      <!-- Bento Pack 4: Career & City Moves (7 cols) -->
+      <button
+        onclick="loadScenario('living', event)"
+        class="reveal-on-scroll md:col-span-7 neo-card neo-card-hover rounded-3xl p-6 sm:p-8 text-left flex flex-col justify-between min-h-[250px] relative overflow-hidden group cursor-pointer"
+      >
+        <div class="flex items-center justify-between w-full">
+          <span class="px-3 py-1 rounded-xl bg-[#8B5CF6] text-white border-2 border-[#09090E] font-mono text-xs font-extrabold uppercase">
+            🏙️ NCR RENT MATH
+          </span>
+          <span class="text-4xl group-hover:scale-125 group-hover:-rotate-12 transition-transform">🏢</span>
+        </div>
+
+        <div class="space-y-2 mt-8">
+          <div class="font-mono text-xs font-bold text-[#D4FF00] uppercase">CAREER &amp; CITY MOVES</div>
+          <h3 class="font-display text-2xl sm:text-3xl font-extrabold leading-tight">
+            Rent a 2BHK in Gurgaon vs. Noida on a ₹35,000/mo Budget
+          </h3>
+          <p class="text-xs sm:text-sm opacity-80">
+            Gated high-rise society with pool &amp; Metro vs. proximity to CyberHub offices.
+          </p>
+          <div class="pt-2 inline-flex items-center gap-1.5 font-mono text-xs font-extrabold text-white bg-[#8B5CF6] px-3 py-1.5 rounded-lg border border-[#09090E]">
+            <span>COMPARE CITIES</span>
+            <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+          </div>
+        </div>
+      </button>
+
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- FOLD 4: INTERACTIVE "HOW THE BRAIN WORKS" & GUARDRAIL PLAYGROUND      -->
+  <!-- ===================================================================== -->
+  <section id="fold-brain" class="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 py-12 sm:py-16 space-y-8">
+
+    <div class="reveal-on-scroll flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+      <div>
+        <span class="px-3 py-1 rounded-lg bg-[#00F5D4] text-[#09090E] font-mono text-xs font-extrabold uppercase border border-[#09090E]">
+          FOLD 04 // ARCHITECTURE &amp; SAFETY
+        </span>
+        <h2 class="font-display text-3xl sm:text-5xl font-extrabold tracking-tight mt-2">
+          HOW THE ENGINE THINKS
+        </h2>
+      </div>
+      <button
+        onclick="runGuardrailTest(event)"
+        class="px-4 py-2.5 rounded-xl bg-[#FF2A85] text-white border-2 border-[#09090E] font-mono text-xs font-extrabold uppercase shadow-[4px_4px_0px_#D4FF00] hover:scale-105 transition self-start sm:self-end cursor-pointer"
+      >
+        🚨 Trigger Live Guardrail Demo
+      </button>
+    </div>
+
+    <!-- 3-Step Horizontal Pipeline Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      <!-- Step 1 -->
+      <div class="reveal-on-scroll neo-card neo-card-hover rounded-3xl p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="font-mono text-xs font-extrabold px-3 py-1 rounded-lg bg-[#FF2A85] text-white border border-[#09090E]">
+            STEP 01 // &lt;5ms
+          </span>
+          <span class="text-2xl">🛡️</span>
+        </div>
+        <h3 class="font-display text-xl font-extrabold">
+          Edge Guardrail Filter
+        </h3>
+        <p class="text-xs sm:text-sm leading-relaxed" style="color: var(--text-secondary);">
+          Before any AI tokens run, our deterministic regex &amp; semantic classifier intercepts medical, doctor, dosage, death, or self-harm queries and routes users to 24/7 crisis helplines.
+        </p>
+        <div class="pt-2 font-mono text-[11px] text-[#FF2A85] font-bold">
+          ✓ Zero clinical or life-safety hallucinations
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="reveal-on-scroll neo-card neo-card-hover rounded-3xl p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="font-mono text-xs font-extrabold px-3 py-1 rounded-lg bg-[#D4FF00] text-[#09090E] border border-[#09090E]">
+            STEP 02 // WEIGHTING
+          </span>
+          <span class="text-2xl">⚖️</span>
+        </div>
+        <h3 class="font-display text-xl font-extrabold">
+          Priority Vibe Weighting
+        </h3>
+        <p class="text-xs sm:text-sm leading-relaxed" style="color: var(--text-secondary);">
+          Your selected Priority Mode (<em>Broke/Budget</em>, <em>Balanced</em>, <em>Speedrun</em>, or <em>Main Character</em>) dynamically shifts the weight of Rupee cost vs. time saved vs. long-term flex.
+        </p>
+        <div class="pt-2 font-mono text-[11px] text-[#00F5D4] font-bold">
+          ✓ Flip the mode to watch verdicts adapt
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="reveal-on-scroll neo-card neo-card-hover rounded-3xl p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="font-mono text-xs font-extrabold px-3 py-1 rounded-lg bg-[#00F5D4] text-[#09090E] border border-[#09090E]">
+            STEP 03 // OUTPUT
+          </span>
+          <span class="text-2xl">🏆</span>
+        </div>
+        <h3 class="font-display text-xl font-extrabold">
+          Instant Pros/Cons Verdict
+        </h3>
+        <p class="text-xs sm:text-sm leading-relaxed" style="color: var(--text-secondary);">
+          Connected to <code>/api/decide</code> (Gemini 2.5 Flash) with an automatic client-side fallback parser so you get 3 Pros, 2 Cons, and a clear Winner in every environment.
+        </p>
+        <div class="pt-2 font-mono text-[11px] text-[#D4FF00] font-bold">
+          ✓ One-tap shareable WhatsApp scorecard
+        </div>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- FOOTER                                                                -->
+  <!-- ===================================================================== -->
+  <footer class="relative z-10 border-t-2 mt-12 py-10 px-4 sm:px-6" style="border-color: var(--border-crisp); background: var(--bg-elevated);">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <span class="font-display font-extrabold text-2xl">DESIONS ⚡</span>
+          <span class="font-mono text-[10px] px-2 py-0.5 rounded bg-[#D4FF00] text-[#09090E] font-extrabold">PWA READY</span>
+        </div>
+        <p class="text-xs opacity-75 max-w-md">
+          The Gen-Z AI Decision &amp; Outcome Engine. Built for instant Pros &amp; Cons with strict Medical &amp; Life-Safety Guardrails.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap gap-2.5 font-mono text-xs font-bold">
+        <button onclick="cycleVibeTheme(event)" class="px-3.5 py-2 rounded-xl border-2 border-[#09090E] bg-[#D4FF00] text-[#09090E] shadow-[3px_3px_0px_#FF2A85]">
+          🎨 Switch Vibe Theme
+        </button>
+        <button onclick="runGuardrailTest(event)" class="px-3.5 py-2 rounded-xl border-2 border-[#FF2A85] text-[#FF2A85]">
+          🛡️ Test Medical Block
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Floating PWA Install Button -->
+  <button
+    id="pwa-install-btn"
+    onclick="triggerAppInstall()"
+    style="display: none;"
+    class="fixed bottom-5 right-5 z-50 neo-btn-primary font-mono text-xs font-extrabold px-4 py-3 rounded-2xl flex items-center gap-2 cursor-pointer"
+  >
+    <span>📲 INSTALL DESIONS APP</span>
+  </button>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden px-5 py-3 rounded-2xl bg-[#09090E] text-[#D4FF00] border-2 border-[#D4FF00] font-mono text-xs font-extrabold shadow-[5px_5px_0px_#FF2A85] flex items-center gap-2">
+    <span>⚡</span>
+    <span id="toast-text">Copied to clipboard!</span>
+  </div>
+
+  <!-- PWA Install Instructions Modal -->
+  <div id="install-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="neo-card rounded-3xl max-w-md w-full p-6 space-y-4 border-2 border-[#D4FF00] shadow-[8px_8px_0px_#FF2A85]">
+      <div class="flex items-center justify-between">
+        <span class="font-display text-2xl font-extrabold">📲 Install DESIONS</span>
+        <button onclick="closeInstallModal()" class="p-1.5 rounded-xl border" style="border-color: var(--border-crisp);">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <p class="text-xs sm:text-sm opacity-85 leading-relaxed">
+        Add <strong>DESIONS</strong> to your home screen for full-screen native speed and offline access:
+      </p>
+      <div class="space-y-2.5 text-xs font-mono p-4 rounded-2xl border" style="background: var(--bg-input); border-color: var(--border-crisp);">
+        <div><strong>🤖 Android (Chrome):</strong> Tap the browser menu (<strong>⋮</strong>) → <strong>"Install app"</strong>.</div>
+        <div><strong>🍏 iPhone (Safari):</strong> Tap <strong>Share (⎋)</strong> at the bottom → <strong>"Add to Home Screen"</strong>.</div>
+      </div>
+      <button onclick="closeInstallModal()" class="w-full py-3 rounded-xl neo-btn-primary font-display font-extrabold text-sm uppercase">
+        GOT IT ⚡
+      </button>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- APPLICATION JAVASCRIPT (VIBE SWITCH, CONFETTI, 3D TILT, AI + FALLBACK)-->
+  <!-- ===================================================================== -->
+  <script>
+    lucide.createIcons();
+
+    // =========================================================================
+    // 1. MULTI-VIBE THEME SWITCHER WITH RADIAL WAVE TRANSITION
+    // =========================================================================
+    const VIBE_THEMES = [
+      { id: 'acid-dark', label: 'VIBE: ACID DARK', icon: '🌙', waveColor: '#D4FF00', metaColor: '#09090E' },
+      { id: 'neo-pop',   label: 'VIBE: NEO-POP PAPER', icon: '☀️', waveColor: '#FF2A85', metaColor: '#FFFDF5' },
+      { id: 'y2k-chrome',label: 'VIBE: Y2K CHROME', icon: '🔮', waveColor: '#00F5D4', metaColor: '#130924' }
+    ];
+    let currentVibeIndex = 0;
+
+    function cycleVibeTheme(e) {
+      currentVibeIndex = (currentVibeIndex + 1) % VIBE_THEMES.length;
+      const nextTheme = VIBE_THEMES[currentVibeIndex];
+
+      // Circular Wave Flash Effect from click coordinates
+      const overlay = document.getElementById('vibe-wave-overlay');
+      const x = e?.clientX || window.innerWidth - 100;
+      const y = e?.clientY || 30;
+      overlay.style.backgroundColor = nextTheme.waveColor;
+      overlay.style.opacity = '0.28';
+      overlay.style.transition = 'none';
+      overlay.style.clipPath = `circle(0% at ${x}px ${y}px)`;
+
+      requestAnimationFrame(() => {
+        overlay.style.transition = 'clip-path 0.55s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.55s ease';
+        overlay.style.clipPath = `circle(150% at ${x}px ${y}px)`;
+        overlay.style.opacity = '0';
+      });
+
+      document.documentElement.setAttribute('data-theme', nextTheme.id);
+      document.getElementById('vibe-icon').textContent = nextTheme.icon;
+      document.getElementById('vibe-label').textContent = nextTheme.label;
+      document.getElementById('meta-theme-color').setAttribute('content', nextTheme.metaColor);
+      showToast(`Switched to ${nextTheme.icon} ${nextTheme.label}`);
+    }
+
+    // =========================================================================
+    // 2. CUSTOM CANVAS CONFETTI & ACID SPARK BURST ENGINE
+    // =========================================================================
+    const confettiCanvas = document.getElementById('confetti-canvas');
+    const ctx = confettiCanvas.getContext('2d');
+    let particles = [];
+
+    function resizeConfettiCanvas() {
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeConfettiCanvas);
+    resizeConfettiCanvas();
+
+    function fireConfettiBurst(originX, originY) {
+      const colors = ['#D4FF00', '#FF2A85', '#00F5D4', '#8B5CF6', '#FFFFFF'];
+      const x = originX || window.innerWidth / 2;
+      const y = originY || window.innerHeight / 2.5;
+
+      for (let i = 0; i < 42; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 4 + Math.random() * 11;
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 4,
+          size: 5 + Math.random() * 6,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rotation: Math.random() * 360,
+          vRot: (Math.random() - 0.5) * 14,
+          life: 1
         });
-        btn.className = 'lens-chip active px-3 py-1 rounded-full bg-indigo-600 text-white font-medium';
-        activeLens = btn.dataset.lens;
-        executeDecision();
-      });
-    });
+      }
+    }
 
-    // 2. Preset test chips
-    document.querySelectorAll('.test-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        document.getElementById('query-input').value = chip.dataset.q;
-        executeDecision();
-      });
-    });
+    function animateConfetti() {
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.38; // gravity
+        p.rotation += p.vRot;
+        p.life -= 0.018;
 
-    // 3. Form submit
-    document.getElementById('decision-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      executeDecision();
-    });
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
 
-    // 4. Call /api/decide endpoint
-    async function executeDecision() {
-      const query = document.getElementById('query-input').value.trim();
-      if (!query) return;
+        ctx.save();
+        ctx.globalAlpha = Math.max(p.life, 0);
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.restore();
+      }
+      requestAnimationFrame(animateConfetti);
+    }
+    animateConfetti();
 
-      const submitBtn = document.getElementById('submit-btn');
-      const btnText = document.getElementById('btn-text');
-      const btnSpinner = document.getElementById('btn-spinner');
-      const errorCard = document.getElementById('error-card');
+    // =========================================================================
+    // 3. 3D PERSPECTIVE MOUSE TILT PHYSICS FOR BATTLE CARDS
+    // =========================================================================
+    function handleCardTilt(e, cardEl) {
+      const rect = cardEl.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      const rotateX = ((y - centerY) / centerY) * -6.5;
+      const rotateY = ((x - centerX) / centerX) * 6.5;
+
+      cardEl.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-4px)`;
+      const glare = cardEl.querySelector('.tilt-glare');
+      if (glare) {
+        glare.style.background = `radial-gradient(circle at ${(x / rect.width) * 100}% ${(y / rect.height) * 100}%, rgba(212,255,0,0.18), transparent 60%)`;
+      }
+    }
+
+    function resetCardTilt(cardEl) {
+      cardEl.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+    }
+
+    // =========================================================================
+    // 4. INTERSECTION OBSERVER FOR MULTI-FOLD SCROLL REVEALS
+    // =========================================================================
+    const revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+          }
+        });
+      },
+      { threshold: 0.14 }
+    );
+
+    document.querySelectorAll('.reveal-on-scroll').forEach((el) => revealObserver.observe(el));
+
+    // =========================================================================
+    // 5. CURATED SCENARIOS & SMART FALLBACK ENGINE
+    // =========================================================================
+    const SCENARIOS = {
+      iphone: {
+        query: "Should I buy iPhone 18 or 18 Pro Max? I have 1 lakh only",
+        blocked: false,
+        winner: "A",
+        verdictHeadline: "Buy the iPhone 18 and pocket ₹20,100 cash — zero EMI trap.",
+        verdictSummary: "With a strict ₹1,00,000 budget, the iPhone 18 (~₹79,900) fits effortlessly with ₹20,100 left over for AirPods or AppleCare+. The iPhone 18 Pro Max (~₹1,44,900) blows past your cap by ₹45,000 and locks you into unnecessary EMI stress.",
+        optionA: {
+          name: "iPhone 18",
+          subtitle: "~₹79,900 • Fits ₹1L Budget (₹20,100 Saved)",
+          rating: "9.6",
+          pros: [
+            "Stays ₹20,100 under your ₹1 Lakh cap — zero EMI debt or financial stress",
+            "Leaves cash in hand for AirPods Pro, MagSafe charger, or AppleCare+",
+            "Delivers 92% of the flagship experience (same generation chip, iOS, all-day battery)"
+          ],
+          cons: [
+            "Missing the 5x optical telephoto zoom lens for far-away concert clips",
+            "Standard aluminum frame instead of Pro titanium"
+          ]
+        },
+        optionB: {
+          name: "iPhone 18 Pro Max",
+          subtitle: "~₹1,44,900 • ₹45,000 Over Your Budget",
+          rating: "6.7",
+          pros: [
+            "Top-tier triple camera with 5x telephoto zoom and ProRes creator video",
+            "Massive 6.9-inch display and longest single-charge battery life",
+            "Stronger second-hand resale value after 3+ years"
+          ],
+          cons: [
+            "Overshoots your ₹1,00,000 budget by ₹45,000+ (45% over your limit)",
+            "Forces you into monthly credit card EMIs or draining emergency savings"
+          ]
+        }
+      },
+
+      biryani: {
+        query: "Should I order Biryani online or cook Maggi at home at 11 PM?",
+        blocked: false,
+        winner: "B",
+        verdictHeadline: "Cook Maggi + 2 Eggs in 10 mins and save ₹325 tonight.",
+        verdictSummary: "At 11:00 PM, cooking quick Maggi with eggs gets hot food on your plate by 11:10 PM for ₹35. Ordering Biryani late at night arrives near midnight, costs ₹360+ with surge fees, and wrecks your sleep quality.",
+        optionA: {
+          name: "Order Biryani Online",
+          subtitle: "45 Mins Wait • ~₹360 with Late-Night Surge",
+          rating: "7.1",
+          pros: [
+            "Zero cooking effort or pan washing when you are exhausted",
+            "High comfort-food craving satisfaction",
+            "Usually enough portion left over for tomorrow's lunch"
+          ],
+          cons: [
+            "Arrives around 11:50 PM, causing heavy late-night acidity & poor sleep",
+            "10x more expensive due to packaging, GST, and night delivery surge"
+          ]
+        },
+        optionB: {
+          name: "Cook Maggi at Home",
+          subtitle: "10 Mins Ready • ~₹35 Total Cost",
+          rating: "9.4",
+          pros: [
+            "Piping hot and ready in 10 minutes — 35 mins faster than delivery",
+            "Saves ₹325+ in restaurant markups and late-night platform fees",
+            "Lighter portion before bed (drop in 2 eggs or veggies for protein)"
+          ],
+          cons: [
+            "Requires 10 minutes in the kitchen and rinsing 1 saucepan",
+            "Less indulgent than slow-cooked dum biryani"
+          ]
+        }
+      },
+
+      console: {
+        query: "Should I buy PS5 Slim or Xbox Series X under 45,000?",
+        blocked: false,
+        winner: "A",
+        verdictHeadline: "Lock in the PS5 Slim under ₹45,000 for exclusives & disc resale.",
+        verdictSummary: "With a ₹45,000 budget in India, the PS5 Slim regularly drops to ₹42,990–₹44,990 during sales and dominates with Spider-Man 2, Astro Bot, and GTA VI console priority plus huge pre-owned disc trading.",
+        optionA: {
+          name: "PlayStation 5 Slim",
+          subtitle: "~₹43,990 • Fits ₹45k Cap • Best Exclusives",
+          rating: "9.5",
+          pros: [
+            "Fits inside your ₹45,000 budget during Indian e-commerce sales",
+            "Unmatched DualSense haptics & blockbuster exclusives (Spider-Man, Ghost of Yotei)",
+            "Massive Indian pre-owned game disc buying & resale market"
+          ],
+          cons: [
+            "PS Plus subscription is pricier than Game Pass for day-one titles",
+            "Bulky white shell takes more space on your desk/TV unit"
+          ]
+        },
+        optionB: {
+          name: "Xbox Series X",
+          subtitle: "~₹48,990+ • Stretches Budget • Game Pass King",
+          rating: "7.8",
+          pros: [
+            "Xbox Game Pass Ultimate unlocks hundreds of day-one games immediately",
+            "Clean, whisper-quiet matte black monolith design",
+            "Quick Resume switches between 5 games in 2 seconds"
+          ],
+          cons: [
+            "Retails ₹4,000–₹7,000 above your ₹45,000 budget cap in India",
+            "Tiny physical disc resale market and fewer must-play exclusives"
+          ]
+        }
+      },
+
+      living: {
+        query: "Should I rent a 2BHK in Gurgaon or Noida with 35k budget?",
+        blocked: false,
+        winner: "B",
+        verdictHeadline: "Rent in Noida for a modern gated 2BHK comfortably under ₹35,000.",
+        verdictSummary: "On a ₹35,000/month budget, Noida (Sectors 75, 78, 137) gets you a modern high-rise 2BHK with pool, gym, and Metro access for ~₹29k. In Gurgaon, ₹35k restricts you to cramped builder floors or far-flung sectors.",
+        optionA: {
+          name: "Rent 2BHK in Gurgaon",
+          subtitle: "~₹38k–₹48k • Close to CyberHub Offices",
+          rating: "7.3",
+          pros: [
+            "15–20 min commute if your office is in CyberCity or Golf Course Road",
+            "Buzzing nightlife, cafes, and startup networking scenes",
+            "High density of Fortune 500 headquarters"
+          ],
+          cons: [
+            "₹35k barely gets an older builder floor without amenities in central Gurgaon",
+            "Severe monsoon waterlogging, high power-backup rates, and broken internal roads"
+          ]
+        },
+        optionB: {
+          name: "Rent 2BHK in Noida",
+          subtitle: "~₹27k–₹32k • High-Rise Society Fits ₹35k",
+          rating: "9.3",
+          pros: [
+            "Gets a spacious 2BHK in a gated high-rise with gym, pool & security under ₹32k",
+            "Wide expressways, greener parks, and reliable Metro connectivity",
+            "Saves ₹5,000–₹8,000 every single month on rent and maintenance"
+          ],
+          cons: [
+            "60–75 min commute if you work daily inside Gurgaon",
+            "Quieter late-night pub scene compared to CyberHub"
+          ]
+        }
+      }
+    };
+
+    // Deterministic Safety Guardrail Regex (Instant <5ms protection)
+    const SAFETY_REGEX = /\b(suicide|suicidal|kill myself|end my life|self[\s-]?harm|overdose|want to die|die|death|hang myself|chest pain|heart attack|stroke|insulin|antibiotics|dosage|prescription|surgery|cancer|tumor|bleeding|unconscious|emergency|doctor|medical|medicine|pill|tablet|symptom|diagnosis)\b/i;
+
+    let activeLens = "Strict Budget & Value for Money";
+    let lastRenderedData = SCENARIOS.iphone;
+
+    // =========================================================================
+    // 6. RENDER VERDICT OR SAFETY GUARDRAIL IN THE ARENA
+    // =========================================================================
+    function renderDecisionOutput(queryText, data, sourceLabel) {
       const guardrailCard = document.getElementById('guardrail-card');
       const resultsContainer = document.getElementById('results-container');
+      const verdictBanner = document.getElementById('verdict-banner-card');
 
-      // Set loading state
+      document.getElementById('engine-status-pill').textContent = sourceLabel || "⚡ Instant Outcome Matrix";
+
+      // Handle Blocked Medical / Life-Safety Queries
+      if (data.blocked) {
+        resultsContainer.classList.add('hidden');
+        guardrailCard.classList.remove('hidden');
+        guardrailCard.classList.remove('guardrail-shake');
+        void guardrailCard.offsetWidth; // trigger reflow for shake animation
+        guardrailCard.classList.add('guardrail-shake');
+
+        document.getElementById('guardrail-title').textContent =
+          data.blockTitle || "Medical, Doctor & Life-Safety Exclusion";
+        document.getElementById('guardrail-message').textContent =
+          data.blockMessage || "Desions is strictly blocked from answering medical symptoms, doctor consultations, medication dosages, life-threatening situations, or self-harm questions.";
+        return;
+      }
+
+      // Render Safe Everyday Verdict
+      guardrailCard.classList.add('hidden');
+      resultsContainer.classList.remove('hidden');
+
+      // Re-trigger dramatic slam animation
+      verdictBanner.classList.remove('verdict-slam');
+      void verdictBanner.offsetWidth;
+      verdictBanner.classList.add('verdict-slam');
+
+      lastRenderedData = { ...data, query: queryText };
+
+      const winnerIsA = (data.winner || 'A') === 'A';
+      const winningOpt = winnerIsA ? data.optionA : data.optionB;
+
+      document.getElementById('verdict-question-label').textContent = `DILEMMA: "${queryText}"`;
+      document.getElementById('winner-pill-name').textContent = `${winningOpt?.name || 'OPTION ' + data.winner} WINS`;
+      document.getElementById('vibe-score-badge').textContent = `${winningOpt?.rating || '9.5'}/10 VIBE SCORE`;
+      document.getElementById('verdict-headline').textContent = data.verdictHeadline || `Winner: ${winningOpt?.name}`;
+      document.getElementById('verdict-summary').textContent = data.verdictSummary || "";
+
+      // Populate Option A
+      const optA = data.optionA || { name: 'Option A', subtitle: '', pros: [], cons: [] };
+      document.getElementById('name-a').textContent = optA.name;
+      document.getElementById('sub-a').textContent = optA.subtitle || "Evaluated against your priority lens";
+      document.getElementById('pros-a').innerHTML = (optA.pros || []).map((p, idx) =>
+        `<li class="stagger-item flex items-start gap-2.5" style="animation-delay: ${idx * 70}ms">
+          <span class="text-[#D4FF00] font-mono font-extrabold shrink-0">✦</span>
+          <span>${p}</span>
+        </li>`
+      ).join('');
+      document.getElementById('cons-a').innerHTML = (optA.cons || []).map((c, idx) =>
+        `<li class="stagger-item flex items-start gap-2.5" style="animation-delay: ${(idx + 2) * 70}ms">
+          <span class="text-[#FF2A85] font-mono font-extrabold shrink-0">✕</span>
+          <span>${c}</span>
+        </li>`
+      ).join('');
+
+      // Populate Option B
+      const optB = data.optionB || { name: 'Option B', subtitle: '', pros: [], cons: [] };
+      document.getElementById('name-b').textContent = optB.name;
+      document.getElementById('sub-b').textContent = optB.subtitle || "Evaluated against your priority lens";
+      document.getElementById('pros-b').innerHTML = (optB.pros || []).map((p, idx) =>
+        `<li class="stagger-item flex items-start gap-2.5" style="animation-delay: ${idx * 70}ms">
+          <span class="text-[#D4FF00] font-mono font-extrabold shrink-0">✦</span>
+          <span>${p}</span>
+        </li>`
+      ).join('');
+      document.getElementById('cons-b').innerHTML = (optB.cons || []).map((c, idx) =>
+        `<li class="stagger-item flex items-start gap-2.5" style="animation-delay: ${(idx + 2) * 70}ms">
+          <span class="text-[#FF2A85] font-mono font-extrabold shrink-0">✕</span>
+          <span>${c}</span>
+        </li>`
+      ).join('');
+
+      // Style Winner vs Runner-Up Battle Cards
+      const cardA = document.getElementById('card-a');
+      const cardB = document.getElementById('card-b');
+      const badgeA = document.getElementById('badge-a');
+      const badgeB = document.getElementById('badge-b');
+      const scoreA = document.getElementById('score-a');
+      const scoreB = document.getElementById('score-b');
+
+      if (winnerIsA) {
+        cardA.className = "tilt-card neo-card rounded-3xl p-6 sm:p-7 flex flex-col justify-between border-2 border-[#D4FF00] shadow-[8px_8px_0px_#D4FF00]";
+        cardB.className = "tilt-card neo-card rounded-3xl p-6 sm:p-7 flex flex-col justify-between opacity-95";
+        badgeA.className = "px-3 py-1 rounded-xl bg-[#D4FF00] text-[#09090E] border-2 border-[#09090E] font-mono text-xs font-extrabold uppercase";
+        badgeA.textContent = "CERTIFIED W 🏆";
+        badgeB.className = "px-3 py-1 rounded-xl bg-[#FF2A85]/20 text-[#FF2A85] border-2 border-[#FF2A85] font-mono text-xs font-extrabold uppercase";
+        badgeB.textContent = "BUDGET L / RUNNER UP";
+        scoreA.textContent = `${optA.rating || '9.5'} / 10`;
+        scoreB.textContent = `${optB.rating || '6.8'} / 10`;
+      } else {
+        cardB.className = "tilt-card neo-card rounded-3xl p-6 sm:p-7 flex flex-col justify-between border-2 border-[#D4FF00] shadow-[8px_8px_0px_#D4FF00]";
+        cardA.className = "tilt-card neo-card rounded-3xl p-6 sm:p-7 flex flex-col justify-between opacity-95";
+        badgeB.className = "px-3 py-1 rounded-xl bg-[#D4FF00] text-[#09090E] border-2 border-[#09090E] font-mono text-xs font-extrabold uppercase";
+        badgeB.textContent = "CERTIFIED W 🏆";
+        badgeA.className = "px-3 py-1 rounded-xl bg-[#FF2A85]/20 text-[#FF2A85] border-2 border-[#FF2A85] font-mono text-xs font-extrabold uppercase";
+        badgeA.textContent = "RUNNER UP OPTION";
+        scoreB.textContent = `${optB.rating || '9.4'} / 10`;
+        scoreA.textContent = `${optA.rating || '7.1'} / 10`;
+      }
+    }
+
+    // =========================================================================
+    // 7. SMART FALLBACK ENGINE FOR ANY CUSTOM USER DILEMMA
+    // =========================================================================
+    function generateSmartFallback(query, perspective) {
+      const qLower = query.toLowerCase();
+
+      if (SAFETY_REGEX.test(query)) {
+        return {
+          blocked: true,
+          blockTitle: "Medical, Doctor & Life-Safety Exclusion",
+          blockMessage:
+            "Desions is built strictly for everyday lifestyle, shopping, food, and practical choices. It is hard-blocked from answering medical symptoms, doctor advice, medication dosages, life-threatening emergencies, or self-harm."
+        };
+      }
+
+      if (qLower.includes("iphone 18") && qLower.includes("pro max")) {
+        const copy = JSON.parse(JSON.stringify(SCENARIOS.iphone));
+        if (perspective.includes("Future-Proof")) {
+          copy.winner = "B";
+          copy.verdictHeadline = "Main Character Mode: Grab 18 Pro Max ONLY with an old phone trade-in.";
+          copy.verdictSummary = "Under Max Quality mode, the iPhone 18 Pro Max wins for its 5x Telephoto zoom and 6.9-inch screen — but on a ₹1 Lakh cap, only do this if an old phone exchange covers the ₹45,000 gap.";
+        }
+        return copy;
+      }
+
+      if (qLower.includes("biryani") || qLower.includes("maggi") || qLower.includes("swiggy") || qLower.includes("cook")) {
+        const copy = JSON.parse(JSON.stringify(SCENARIOS.biryani));
+        if (perspective.includes("Time Saver")) {
+          copy.winner = "A";
+          copy.verdictHeadline = "Speedrun Mode: Order from a <25 min spot nearby & skip kitchen cleanup.";
+          copy.verdictSummary = "Since you picked Save Time/Effort mode, ordering online lets you chill immediately with zero pan washing — just pick a spot within 3 km for fast delivery.";
+        }
+        return copy;
+      }
+
+      if (qLower.includes("ps5") || qLower.includes("xbox")) {
+        return JSON.parse(JSON.stringify(SCENARIOS.console));
+      }
+
+      if (qLower.includes("gurgaon") || qLower.includes("noida")) {
+        return JSON.parse(JSON.stringify(SCENARIOS.living));
+      }
+
+      // Dynamic Parser for any "X vs/or Y" dilemma
+      const cleaned = query.replace(/[?]+$/, "").trim();
+      const splitParts = cleaned.split(/\b(?:vs\.?|versus|or)\b/i);
+      let rawA = splitParts[0] ? splitParts[0].replace(/^(should i|shall i|can i|buy|get|choose|rent|go to)\s+/i, "").trim() : "Option A";
+      let rawB = splitParts[1] ? splitParts[1].replace(/\b(i have.*|under.*|with.*|budget.*)$/i, "").trim() : "Alternative Option B";
+
+      const nameA = rawA.charAt(0).toUpperCase() + rawA.slice(1);
+      const nameB = rawB.charAt(0).toUpperCase() + rawB.slice(1);
+      const chooseB = perspective.includes("Future-Proof") || perspective.includes("Time Saver");
+
+      return {
+        blocked: false,
+        winner: chooseB ? "B" : "A",
+        verdictHeadline: chooseB
+          ? `Lock in ${nameB} — highest convenience & peak long-term payoff.`
+          : `Lock in ${nameA} — smartest rupee-to-value win for your constraints.`,
+        verdictSummary: chooseB
+          ? `Under your "${perspective}" mode, ${nameB} takes the W by eliminating manual friction and giving you the highest ceiling.`
+          : `Under your "${perspective}" mode, ${nameA} protects your cash, avoids unnecessary overspending, and nails 90% of what actually matters.`,
+        optionA: {
+          name: nameA,
+          subtitle: "Smart Value & Zero-Regret Pick",
+          rating: chooseB ? "7.6" : "9.3",
+          pros: [
+            "Keeps your budget intact with zero EMI or buyer's remorse",
+            "Covers 90% of real-world daily utility without paying for hype",
+            "Leaves extra cash in your pocket for upgrades or savings"
+          ],
+          cons: [
+            "Fewer flashy flex features compared to the pricier option",
+            "Requires slightly more hands-on effort"
+          ]
+        },
+        optionB: {
+          name: nameB,
+          subtitle: "Premium / Max Convenience Option",
+          rating: chooseB ? "9.2" : "7.1",
+          pros: [
+            "Maximum convenience, speed, or top-of-the-line specs out of the box",
+            "Zero manual effort and stronger immediate flex",
+            "Higher ceiling if budget is not a constraint"
+          ],
+          cons: [
+            "Significantly higher upfront cost or recurring fees",
+            "Harsh diminishing returns if you are working with a strict budget"
+          ]
+        }
+      };
+    }
+
+    // =========================================================================
+    // 8. DRAMATIC SLOT-SHUFFLE TRANSITION + LIVE /api/decide EXECUTION
+    // =========================================================================
+    const SHUFFLE_MESSAGES = [
+      "SCANNING SAFETY GUARDRAILS...",
+      "CRUNCHING RUPEE vs REGRET MATRIX...",
+      "WEIGHTING PRIORITY VIBE SCORE...",
+      "LOCKING IN CERTIFIED W VERDICT..."
+    ];
+
+    async function executeDecision(triggerEvent) {
+      const inputEl = document.getElementById('query-input');
+      const query = inputEl.value.trim();
+      if (!query) return;
+
+      // Fast Layer-1 Guardrail Check (Immediate Shake, No Confetti)
+      if (SAFETY_REGEX.test(query)) {
+        renderDecisionOutput(
+          query,
+          {
+            blocked: true,
+            blockTitle: "Medical, Doctor & Life-Safety Exclusion",
+            blockMessage:
+              "Desions only evaluates everyday lifestyle, shopping, food, and practical choices. It is strictly blocked from answering medical symptoms, doctor advice, medication dosages, life-threatening, or self-harm questions."
+          },
+          "🛡️ Instant Edge Guardrail"
+        );
+        return;
+      }
+
+      const shuffleLoader = document.getElementById('shuffle-loader');
+      const shuffleText = document.getElementById('shuffle-slot-text');
+      const shuffleBar = document.getElementById('shuffle-progress-bar');
+      const resultsContainer = document.getElementById('results-container');
+      const guardrailCard = document.getElementById('guardrail-card');
+      const submitBtn = document.getElementById('submit-btn');
+      const btnText = document.getElementById('btn-text');
+
+      // Start Dramatic Slot-Machine Shuffle UI
       submitBtn.disabled = true;
-      btnText.classList.add('hidden');
-      btnSpinner.classList.remove('hidden');
-      errorCard.classList.add('hidden');
+      btnText.textContent = "COOKING... ⚡";
+      guardrailCard.classList.add('hidden');
+      resultsContainer.classList.add('hidden');
+      shuffleLoader.classList.remove('hidden');
+
+      let step = 0;
+      const shuffleInterval = setInterval(() => {
+        step = (step + 1) % SHUFFLE_MESSAGES.length;
+        shuffleText.textContent = SHUFFLE_MESSAGES[step];
+        shuffleBar.style.width = `${((step + 1) / SHUFFLE_MESSAGES.length) * 100}%`;
+      }, 110);
+
+      // Start both the API call and a minimum 420ms kinetic shuffle timer
+      const minShufflePromise = new Promise((r) => setTimeout(r, 420));
+      let resultData = null;
+      let sourceLabel = "⚡ Built-in Outcome Engine";
 
       try {
-        const response = await fetch('/api/decide', {
+        const apiPromise = fetch('/api/decide', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query, perspective: activeLens })
         });
 
-        const data = await response.json();
+        const [response] = await Promise.all([apiPromise, minShufflePromise]);
 
-        if (!response.ok) {
-          throw new Error(data.error || 'Server returned an error.');
-        }
-
-        if (data.blocked) {
-          // Render Guardrail Block
-          resultsContainer.classList.add('hidden');
-          guardrailCard.classList.remove('hidden');
-          document.getElementById('guardrail-title').innerText = data.blockTitle || 'Guardrail Triggered';
-          document.getElementById('guardrail-message').innerText = data.blockMessage || 'Cannot answer medical or dangerous queries.';
-          
-          const helplineBox = document.getElementById('helpline-list');
-          helplineBox.innerHTML = '';
-          (data.helplines || [{ name: 'Emergency', number: '112' }]).forEach(h => {
-            helplineBox.innerHTML += `<span class="px-2 py-1 rounded bg-rose-500/20 text-rose-200 font-mono">${h.name}: <strong>${h.number}</strong></span>`;
-          });
+        if (response.ok) {
+          resultData = await response.json();
+          sourceLabel = "⚡ Live Gemini AI (/api/decide)";
         } else {
-          // Render Clean Decision Result
-          guardrailCard.classList.add('hidden');
-          resultsContainer.classList.remove('hidden');
-
-          document.getElementById('winner-badge').innerText = `Option ${data.winner} Wins`;
-          document.getElementById('verdict-headline').innerText = data.verdictHeadline || 'Decision Verdict';
-          document.getElementById('verdict-summary').innerText = data.verdictSummary || '';
-
-          // Option A
-          document.getElementById('name-a').innerText = data.optionA?.name || 'Option A';
-          document.getElementById('sub-a').innerText = data.optionA?.subtitle || '';
-          document.getElementById('pros-a').innerHTML = (data.optionA?.pros || []).map(p => `<li class="flex items-start gap-1.5"><span class="text-emerald-400 font-bold">✓</span><span>${p}</span></li>`).join('');
-          document.getElementById('cons-a').innerHTML = (data.optionA?.cons || []).map(c => `<li class="flex items-start gap-1.5"><span class="text-rose-400 font-bold">✕</span><span>${c}</span></li>`).join('');
-
-          // Option B
-          document.getElementById('name-b').innerText = data.optionB?.name || 'Option B';
-          document.getElementById('sub-b').innerText = data.optionB?.subtitle || '';
-          document.getElementById('pros-b').innerHTML = (data.optionB?.pros || []).map(p => `<li class="flex items-start gap-1.5"><span class="text-emerald-400 font-bold">✓</span><span>${p}</span></li>`).join('');
-          document.getElementById('cons-b').innerHTML = (data.optionB?.cons || []).map(c => `<li class="flex items-start gap-1.5"><span class="text-rose-400 font-bold">✕</span><span>${c}</span></li>`).join('');
-
-          // Highlight winner card visually
-          const cardA = document.getElementById('card-a');
-          const cardB = document.getElementById('card-b');
-          if (data.winner === 'A') {
-            cardA.classList.add('border-emerald-500/50', 'bg-emerald-950/10');
-            cardB.classList.remove('border-emerald-500/50', 'bg-emerald-950/10');
-          } else {
-            cardB.classList.add('border-emerald-500/50', 'bg-emerald-950/10');
-            cardA.classList.remove('border-emerald-500/50', 'bg-emerald-950/10');
-          }
+          throw new Error("Fallback to client engine");
         }
       } catch (err) {
-        errorCard.innerText = `Error: ${err.message}`;
-        errorCard.classList.remove('hidden');
+        await minShufflePromise;
+        resultData = generateSmartFallback(query, activeLens);
+        sourceLabel = "⚡ Instant Outcome Matrix";
       } finally {
+        clearInterval(shuffleInterval);
+        shuffleLoader.classList.add('hidden');
         submitBtn.disabled = false;
-        btnText.classList.remove('hidden');
-        btnSpinner.classList.add('hidden');
+        btnText.textContent = "DECIDE ⚡";
+      }
+
+      renderDecisionOutput(query, resultData, sourceLabel);
+
+      // Fire celebratory confetti burst if not blocked
+      if (!resultData.blocked) {
+        const x = triggerEvent?.clientX || window.innerWidth / 2;
+        const y = triggerEvent?.clientY || window.innerHeight / 3;
+        fireConfettiBurst(x, y);
       }
     }
 
-    // Run initial query on page load
-    window.addEventListener('DOMContentLoaded', () => executeDecision());
+    // =========================================================================
+    // 9. UI EVENT HANDLERS (FORMS, SCENARIOS, SHARE, PWA)
+    // =========================================================================
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      executeDecision(e);
+    }
 
-    // PWA Service Worker Registration
+    function handleLensChange(newLens) {
+      activeLens = newLens;
+      const selectEl = document.getElementById('lens-select');
+      const selectedText = selectEl.options[selectEl.selectedIndex].text;
+      document.getElementById('active-lens-badge').textContent = `VIBE: ${selectedText}`;
+      executeDecision();
+    }
+
+    function loadScenario(key, e) {
+      const item = SCENARIOS[key];
+      if (!item) return;
+      document.getElementById('query-input').value = item.query;
+      document.getElementById('fold-arena').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      executeDecision(e);
+    }
+
+    function runGuardrailTest(e) {
+      const testQuery = "I have sharp chest pain, should I ignore it and go to the gym or sleep?";
+      document.getElementById('query-input').value = testQuery;
+      document.getElementById('fold-arena').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      executeDecision(e);
+    }
+
+    function clearSearchInput() {
+      const input = document.getElementById('query-input');
+      input.value = '';
+      input.focus();
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-text').textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 2600);
+    }
+
+    function formatShareCardText() {
+      const d = lastRenderedData;
+      const winOpt = (d.winner || 'A') === 'A' ? d.optionA : d.optionB;
+      return [
+        `⚡ *DESIONS // CERTIFIED W VERDICT* 🏆`,
+        `Q: ${d.query}`,
+        `👑 *Winner:* ${winOpt?.name} (${winOpt?.rating || '9.5'}/10)`,
+        `💡 *Verdict:* ${d.verdictHeadline}`,
+        `${d.verdictSummary}`,
+        ``,
+        `✦ *${d.optionA?.name} Pros:* ${(d.optionA?.pros || []).slice(0, 2).join(' | ')}`,
+        `✦ *${d.optionB?.name} Pros:* ${(d.optionB?.pros || []).slice(0, 2).join(' | ')}`
+      ].join('\n');
+    }
+
+    function copyVerdictToClipboard() {
+      const text = formatShareCardText();
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast("Verdict Card copied! Ready to drop on WhatsApp.");
+      } catch (err) {
+        showToast("Copied!");
+      }
+      document.body.removeChild(ta);
+    }
+
+    async function shareVerdictCard() {
+      const text = formatShareCardText();
+      copyVerdictToClipboard();
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'DESIONS Verdict', text });
+          return;
+        } catch (err) {}
+      }
+      const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+      window.open(waUrl, '_blank', 'noopener,noreferrer');
+    }
+
+    // PWA Service Worker & Install Prompt
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW error:', err));
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
       });
     }
 
-    // PWA Install Button Handler
-    let deferredPrompt;
+    let deferredPrompt = null;
     const installBtn = document.getElementById('pwa-install-btn');
+
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      installBtn.style.display = 'block';
+      installBtn.style.display = 'flex';
     });
-    installBtn.addEventListener('click', async () => {
-      if (!deferredPrompt) return;
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') installBtn.style.display = 'none';
-      deferredPrompt = null;
+
+    async function triggerAppInstall() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') installBtn.style.display = 'none';
+        deferredPrompt = null;
+      } else {
+        document.getElementById('install-modal').classList.remove('hidden');
+      }
+    }
+
+    function closeInstallModal() {
+      document.getElementById('install-modal').classList.add('hidden');
+    }
+
+    // Initialize Default Scenario on Load
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      renderDecisionOutput(SCENARIOS.iphone.query, SCENARIOS.iphone, "⚡ Instant Outcome Matrix Ready");
     });
   </script>
 </body>
